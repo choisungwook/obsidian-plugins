@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-notion-sync",
+  "name": "Notion Sync",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Sync your vault's markdown notes to Notion pages.",
+  "author": "choisungwook",
+  "authorUrl": "https://github.com/choisungwook",
+  "isDesktopOnly": true
+}
