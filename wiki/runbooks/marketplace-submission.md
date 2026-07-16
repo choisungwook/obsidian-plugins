@@ -1,7 +1,7 @@
 ---
 type: Runbook
 title: Obsidian Community Plugin Marketplace Submission
-description: Procedure for publishing notion-sync to the Obsidian community plugin marketplace.
+description: Procedure for publishing akbun-notion-sync to the Obsidian community plugin marketplace.
 resource: https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin
 tags: [obsidian, marketplace, release, submission]
 timestamp: 2026-07-17T00:00:00Z
@@ -11,10 +11,10 @@ timestamp: 2026-07-17T00:00:00Z
 
 ## 제출 요건 (Obsidian 측 검증 항목)
 
-- 플러그인 ID에 `obsidian` 포함 금지 → ID는 `notion-sync` (2026-07-17에 `obsidian-notion-sync`에서 변경).
+- 플러그인 ID에 `obsidian` 포함 금지 → ID는 `akbun-notion-sync` (2026-07-17에 `obsidian-notion-sync` → `notion-sync` → `akbun-notion-sync` 순으로 변경).
 - 저장소 루트에 `manifest.json`, `README.md`, `LICENSE`가 있어야 함 — 이 요건 때문에 2026-07-17에 모노레포 서브디렉터리 구조를 버리고 이 저장소(`choisungwook/obsidian-plugins`)를 플러그인 전용 저장소로 전환했다.
 - `manifest.json`의 `version`과 **정확히 같은 이름의 태그**로 GitHub Release를 만들고, `main.js`와 `manifest.json`을 개별 자산으로 첨부 (`versions.json`도 권장). `.github/workflows/release.yml`이 main 머지 시 자동으로 수행한다.
-- ID/이름이 기존 커뮤니티 플러그인과 중복 금지 — `notion-sync` / `Notion Sync`는 2026-07-17 기준 미사용 확인.
+- ID/이름이 기존 커뮤니티 플러그인과 중복 금지 — 기존 마켓에 "Notion Sync" 계열 플러그인이 이미 있어 2026-07-17에 `akbun-notion-sync` / `Akbun Notion Sync`로 변경.
 
 ## 절차
 
@@ -25,8 +25,8 @@ timestamp: 2026-07-17T00:00:00Z
 
    ```json
    {
-     "id": "notion-sync",
-     "name": "Notion Sync",
+     "id": "akbun-notion-sync",
+     "name": "Akbun Notion Sync",
      "author": "choisungwook",
      "description": "Sync your vault's markdown notes to Notion pages.",
      "repo": "choisungwook/obsidian-plugins"

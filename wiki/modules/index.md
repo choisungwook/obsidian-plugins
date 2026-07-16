@@ -1,7 +1,7 @@
 ---
 type: Index
 title: Modules
-description: Source module documentation for the notion-sync plugin.
+description: Source module documentation for the akbun-notion-sync plugin.
 tags: [modules]
 timestamp: 2026-07-17T00:00:00Z
 ---

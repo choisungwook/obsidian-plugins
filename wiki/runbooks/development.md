@@ -1,7 +1,7 @@
 ---
 type: Runbook
 title: Development
-description: Build, test, and local-install procedure for the notion-sync plugin.
+description: Build, test, and local-install procedure for the akbun-notion-sync plugin.
 tags: [build, test, ci]
 timestamp: 2026-07-17T00:00:00Z
 ---
@@ -23,7 +23,7 @@ npm run dev     # esbuild watch 모드
 
 # Local install
 
-`main.js`와 `manifest.json`을 `<vault>/.obsidian/plugins/notion-sync/`에 복사 후 Obsidian에서 플러그인 활성화.
+`main.js`와 `manifest.json`을 `<vault>/.obsidian/plugins/akbun-notion-sync/`에 복사 후 Obsidian에서 플러그인 활성화.
 
 # CI / Release
 
