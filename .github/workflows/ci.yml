@@ -1,12 +1,10 @@
-name: CI
+name: Test
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,9 +19,3 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: obsidian-notion-sync
-          path: |
-            obsidian-notion-sync/main.js
-            obsidian-notion-sync/manifest.json
