@@ -5,7 +5,7 @@ import { dirname, join } from "path";
 import { Notice, Vault } from "obsidian";
 import { markdownToBlocks, NotionClient } from "./notion-client";
 
-export const CONFIG_DIR = join(homedir(), ".config", "obsidian-notion-sync");
+export const CONFIG_DIR = join(homedir(), ".config", "notion-sync");
 const STATE_FILE = join(CONFIG_DIR, "sync-state.json");
 
 export interface PageState {

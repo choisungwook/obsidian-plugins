@@ -2,9 +2,9 @@
 type: Data File
 title: sync-state.json
 description: Last-synced sha256 hash and Notion page ID per vault path; the basis for create/update/archive classification.
-resource: ~/.config/obsidian-notion-sync/sync-state.json
+resource: ~/.config/notion-sync/sync-state.json
 tags: [state, sync]
-timestamp: 2026-07-16T15:30:00Z
+timestamp: 2026-07-17T00:00:00Z
 ---
 
 # Schema

@@ -4,7 +4,7 @@ title: sync.ts
 description: Full-vault sha256 diffing, sync plan classification (create/update/archive), plan execution, and JSON state persistence.
 resource: ../../src/sync.ts
 tags: [sync, hashing, state]
-timestamp: 2026-07-16T15:30:00Z
+timestamp: 2026-07-17T00:00:00Z
 ---
 
 # Responsibilities
@@ -12,7 +12,7 @@ timestamp: 2026-07-16T15:30:00Z
 - `computeHash(content)`: sha256 hex digest (순수 함수)
 - `planSync(current, state)`: 현재 해시 맵과 [sync-state](../storage/sync-state.md)를 비교해 `SyncPlan { creates, updates, archives }` 판정 (순수 함수)
 - `SyncEngine.run()`: vault 순회 → 계획 수립 → `applyPlan`으로 실행 → 상태 저장
-- `readJsonFile`/`writeJsonFile`: `~/.config/obsidian-notion-sync/` 아래 JSON 파일 I/O. 쓰기는 항상 `0600`, 디렉터리는 `0700`
+- `readJsonFile`/`writeJsonFile`: `~/.config/notion-sync/` 아래 JSON 파일 I/O. 쓰기는 항상 `0600`, 디렉터리는 `0700`
 
 # Classification rules
 
