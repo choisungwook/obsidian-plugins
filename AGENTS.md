@@ -50,4 +50,5 @@
 
 - 커밋 메시지는 명령형 현재 시제로, 무엇을 왜 바꿨는지 요약
 - 빌드 산출물(`main.js`, `node_modules/`)은 커밋하지 말 것 (`.gitignore` 참고)
+- PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 템플릿(`## Goal`, `## What changed`)을 따를 것 — `gh pr create`는 템플릿을 자동 적용하지 않으므로 `--body`에 템플릿 구조를 직접 채워서 작성한다
 - PR 리뷰 코멘트를 반영할 때는 하나의 커밋으로 묶고 항목별로 커밋 메시지에 나열
