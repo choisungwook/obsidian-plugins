@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { createServer, Server } from "http";
 import { join } from "path";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
@@ -50,7 +51,7 @@ export async function resolveToken(method: AuthMethod): Promise<string | null> {
   return token || null;
 }
 
-function waitForOAuthCallback(server: Server, timeoutMs: number): Promise<string> {
+function waitForOAuthCallback(server: Server, expectedState: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       server.close();
@@ -65,15 +66,19 @@ function waitForOAuthCallback(server: Server, timeoutMs: number): Promise<string
       }
       const error = url.searchParams.get("error");
       const code = url.searchParams.get("code");
+      const stateMismatch = url.searchParams.get("state") !== expectedState;
+      const failed = Boolean(error) || !code || stateMismatch;
       response.writeHead(200, { "Content-Type": "text/html" });
       response.end(
-        error
+        failed
           ? "<h3>Authorization failed. You can close this tab.</h3>"
           : "<h3>Authorized. You can close this tab and return to Obsidian.</h3>"
       );
       clearTimeout(timer);
       server.close();
-      if (error || !code) {
+      if (stateMismatch) {
+        reject(new Error("OAuth state mismatch — possible CSRF, aborting"));
+      } else if (error || !code) {
         reject(new Error(error ?? "No authorization code received"));
       } else {
         resolve(code);
@@ -89,8 +94,9 @@ async function runOAuthFlow(clientId: string, clientSecret: string): Promise<Cre
     server.listen(OAUTH_PORT, "127.0.0.1", resolve);
   });
 
-  const callback = waitForOAuthCallback(server, 5 * 60 * 1000);
-  window.open(buildAuthorizationUrl(clientId, OAUTH_REDIRECT_URI));
+  const state = randomBytes(16).toString("hex");
+  const callback = waitForOAuthCallback(server, state, 5 * 60 * 1000);
+  window.open(buildAuthorizationUrl(clientId, OAUTH_REDIRECT_URI, state));
   const code = await callback;
   const token = await exchangeOAuthCode(clientId, clientSecret, code, OAUTH_REDIRECT_URI);
 

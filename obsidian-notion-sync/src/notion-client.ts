@@ -211,7 +211,9 @@ export class NotionClient {
     let cursor: string | undefined;
     const ids: string[] = [];
     do {
-      const query = cursor ? `?start_cursor=${cursor}&page_size=100` : "?page_size=100";
+      const query = cursor
+        ? `?start_cursor=${encodeURIComponent(cursor)}&page_size=100`
+        : "?page_size=100";
       const result = await this.request("GET", `/blocks/${pageId}/children${query}`);
       for (const block of result.results ?? []) {
         ids.push(block.id);
@@ -252,12 +254,13 @@ export async function exchangeOAuthCode(
   return response.json;
 }
 
-export function buildAuthorizationUrl(clientId: string, redirectUri: string): string {
+export function buildAuthorizationUrl(clientId: string, redirectUri: string, state: string): string {
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",
     owner: "user",
     redirect_uri: redirectUri,
+    state,
   });
   return `https://api.notion.com/v1/oauth/authorize?${params.toString()}`;
 }

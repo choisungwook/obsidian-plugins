@@ -53,20 +53,23 @@ describe("chunkBlocks", () => {
 describe("RateLimiter", () => {
   it("spaces out consecutive calls by the configured interval", async () => {
     vi.useFakeTimers();
-    const limiter = new RateLimiter(334);
-    const order: number[] = [];
+    try {
+      const limiter = new RateLimiter(334);
+      const order: number[] = [];
 
-    const run = Promise.all([
-      limiter.wait().then(() => order.push(Date.now())),
-      limiter.wait().then(() => order.push(Date.now())),
-      limiter.wait().then(() => order.push(Date.now())),
-    ]);
+      const run = Promise.all([
+        limiter.wait().then(() => order.push(Date.now())),
+        limiter.wait().then(() => order.push(Date.now())),
+        limiter.wait().then(() => order.push(Date.now())),
+      ]);
 
-    await vi.runAllTimersAsync();
-    await run;
+      await vi.runAllTimersAsync();
+      await run;
 
-    expect(order[1] - order[0]).toBeGreaterThanOrEqual(334);
-    expect(order[2] - order[1]).toBeGreaterThanOrEqual(334);
-    vi.useRealTimers();
+      expect(order[1] - order[0]).toBeGreaterThanOrEqual(334);
+      expect(order[2] - order[1]).toBeGreaterThanOrEqual(334);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

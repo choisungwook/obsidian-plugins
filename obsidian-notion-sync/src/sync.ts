@@ -56,8 +56,11 @@ export async function readJsonFile<T>(path: string, fallback: T): Promise<T> {
   try {
     const raw = await fs.readFile(path, "utf8");
     return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return fallback;
+    }
+    throw error;
   }
 }
 
@@ -123,6 +126,28 @@ export class SyncEngine {
     }
 
     const progress = new Notice(`Notion sync: 0/${total}`, 0);
+    try {
+      await this.applyPlan(plan, contents, current, state, result, progress, total);
+    } finally {
+      progress.hide();
+    }
+
+    new Notice(
+      `Notion sync done: ${result.created} created, ${result.updated} updated, ` +
+        `${result.archived} archived${result.failed ? `, ${result.failed} failed` : ""}`
+    );
+    return result;
+  }
+
+  private async applyPlan(
+    plan: SyncPlan,
+    contents: Map<string, string>,
+    current: Record<string, string>,
+    state: SyncState,
+    result: SyncResult,
+    progress: Notice,
+    total: number
+  ): Promise<void> {
     let done = 0;
     const tick = () => {
       done += 1;
@@ -168,11 +193,5 @@ export class SyncEngine {
     }
 
     await saveSyncState(state);
-    progress.hide();
-    new Notice(
-      `Notion sync done: ${result.created} created, ${result.updated} updated, ` +
-        `${result.archived} archived${result.failed ? `, ${result.failed} failed` : ""}`
-    );
-    return result;
   }
 }
