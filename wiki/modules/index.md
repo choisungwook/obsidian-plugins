@@ -1,9 +1,9 @@
 ---
 type: Index
 title: Modules
-description: Source module documentation for obsidian-notion-sync.
+description: Source module documentation for the notion-sync plugin.
 tags: [modules]
-timestamp: 2026-07-16T15:30:00Z
+timestamp: 2026-07-17T00:00:00Z
 ---
 
 # Modules

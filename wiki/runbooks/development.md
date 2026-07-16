@@ -1,14 +1,14 @@
 ---
 type: Runbook
 title: Development
-description: Build, test, and local-install procedure for obsidian-notion-sync.
+description: Build, test, and local-install procedure for the notion-sync plugin.
 tags: [build, test, ci]
-timestamp: 2026-07-16T15:30:00Z
+timestamp: 2026-07-17T00:00:00Z
 ---
 
 # Prerequisites
 
-Node 20+. 모든 명령은 `obsidian-notion-sync/` 디렉터리에서 실행.
+Node 20+. 모든 명령은 저장소 루트에서 실행.
 
 # Procedure
 
@@ -23,12 +23,12 @@ npm run dev     # esbuild watch 모드
 
 # Local install
 
-`main.js`와 `manifest.json`을 `<vault>/.obsidian/plugins/obsidian-notion-sync/`에 복사 후 Obsidian에서 플러그인 활성화.
+`main.js`와 `manifest.json`을 `<vault>/.obsidian/plugins/notion-sync/`에 복사 후 Obsidian에서 플러그인 활성화.
 
 # CI / Release
 
 - `.github/workflows/ci.yml` (Test): PR마다 `npm ci` → `npm test` → `npm run build` 실행
-- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 후 (테스트는 PR 단계에서 이미 통과했다고 가정하고 생략) `obsidian-notion-sync-<version>` 태그로 GitHub Release를 생성하고 `main.js`/`manifest.json`/`versions.json`을 첨부한다. 같은 태그의 릴리스가 이미 있으면 건너뛰므로, 릴리스를 내려면 `manifest.json`과 `versions.json`의 버전을 올려서 머지할 것
+- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 후 (테스트는 PR 단계에서 이미 통과했다고 가정하고 생략) manifest 버전과 동일한 태그(예: `0.1.0`)로 GitHub Release를 생성하고 `main.js`/`manifest.json`/`versions.json`을 첨부한다. Obsidian 마켓이 이 태그 형식을 요구한다. 같은 태그의 릴리스가 이미 있으면 건너뛰므로, 릴리스를 내려면 `manifest.json`과 `versions.json`의 버전을 올려서 머지할 것
 
 # Notes for agents
 
