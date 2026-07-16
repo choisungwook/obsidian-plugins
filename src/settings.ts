@@ -132,7 +132,7 @@ export class NotionSyncSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Authentication method")
-      .setDesc("Credentials are stored in ~/.config/notion-sync/credentials.json, never inside the vault.")
+      .setDesc("Credentials are stored in ~/.config/akbun-notion-sync/credentials.json, never inside the vault.")
       .addDropdown((dropdown) =>
         dropdown
           .addOption("token", "Integration token")

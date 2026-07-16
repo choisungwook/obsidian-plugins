@@ -2,7 +2,7 @@
 type: Data File
 title: credentials.json
 description: Notion credentials stored outside the vault with 0600 permissions.
-resource: ~/.config/notion-sync/credentials.json
+resource: ~/.config/akbun-notion-sync/credentials.json
 tags: [security, credentials]
 timestamp: 2026-07-17T00:00:00Z
 ---

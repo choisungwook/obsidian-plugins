@@ -1,6 +1,6 @@
 ---
 type: Plugin
-title: Obsidian Notion Sync
+title: Akbun Notion Sync
 description: Desktop-only Obsidian plugin that syncs vault markdown notes to Notion child pages using sha256 diffing.
 resource: https://github.com/choisungwook/obsidian-plugins
 tags: [obsidian, notion, sync, desktop-only]

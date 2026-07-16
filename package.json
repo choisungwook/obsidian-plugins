@@ -1,5 +1,5 @@
 {
-  "name": "notion-sync",
+  "name": "akbun-notion-sync",
   "version": "0.1.0",
   "description": "Obsidian plugin that syncs vault markdown notes to Notion",
   "main": "main.js",

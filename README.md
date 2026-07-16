@@ -1,10 +1,10 @@
-# Obsidian Notion Sync
+# Akbun Notion Sync
 
 Desktop-only Obsidian plugin that syncs every markdown note in your vault to Notion as child pages of a parent page.
 
 ## How it works
 
-- Walks the whole vault, hashes each note with sha256, and compares against the last synced state (`~/.config/notion-sync/sync-state.json`).
+- Walks the whole vault, hashes each note with sha256, and compares against the last synced state (`~/.config/akbun-notion-sync/sync-state.json`).
 - New notes are created as Notion pages, changed notes are updated in place, and notes deleted from the vault are archived in Notion.
 - Notion API calls are throttled to 3 requests per second, and progress is shown via Obsidian notices.
 
@@ -15,7 +15,7 @@ Two options, selectable in the settings tab:
 1. **Integration token** — paste an internal integration secret from [notion.so/my-integrations](https://www.notion.so/my-integrations). Remember to share the parent page with the integration.
 2. **OAuth** — enter your public integration's client ID and secret, register `http://localhost:43110/callback` as its redirect URI, then click **Connect**. Your browser opens Notion's consent page and the plugin receives the code on a temporary localhost server.
 
-Credentials are stored in `~/.config/notion-sync/credentials.json` with `0600` permissions — never inside the vault, so syncing your vault with git or cloud storage cannot leak tokens.
+Credentials are stored in `~/.config/akbun-notion-sync/credentials.json` with `0600` permissions — never inside the vault, so syncing your vault with git or cloud storage cannot leak tokens.
 
 ## Settings
 
@@ -32,4 +32,4 @@ npm test        # vitest unit tests
 npm run build   # type-check + production bundle (main.js)
 ```
 
-Copy `main.js` and `manifest.json` into `<vault>/.obsidian/plugins/notion-sync/` to install a local build.
+Copy `main.js` and `manifest.json` into `<vault>/.obsidian/plugins/akbun-notion-sync/` to install a local build.

@@ -10,7 +10,7 @@
 
 ## 저장소 구조
 
-- 이 저장소는 **notion-sync 플러그인 전용 저장소**다. Obsidian 커뮤니티 마켓 등록 요건 때문에 `manifest.json`이 루트에 있어야 하며, 플러그인 소스·빌드 설정·테스트가 모두 루트 기준이다 (2026-07-17에 모노레포 구조에서 전환).
+- 이 저장소는 **akbun-notion-sync 플러그인 전용 저장소**다. Obsidian 커뮤니티 마켓 등록 요건 때문에 `manifest.json`이 루트에 있어야 하며, 플러그인 소스·빌드 설정·테스트가 모두 루트 기준이다 (2026-07-17에 모노레포 구조에서 전환).
 - `wiki/`(Open Knowledge Format) 유지 — 코드를 바꾸면 관련 wiki 문서도 갱신할 것
 - 마켓 릴리스 절차는 `wiki/runbooks/marketplace-submission.md` 참고
 
