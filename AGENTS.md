@@ -4,9 +4,10 @@
 
 ## 작업 절차 (필수)
 
-1. **작업 전**: `wiki/index.md`부터 읽고, 건드릴 모듈의 wiki 문서(`wiki/modules/*.md`)와 관련 storage/runbook 문서를 읽는다. 코드보다 wiki를 먼저 읽어야 아키텍처 불변 규칙과 함정(gotcha)을 놓치지 않는다.
-2. **작업 후**: 변경으로 인해 wiki 내용이 낡았는지 확인하고, 수정이 필요하면 같은 커밋(또는 같은 PR)에서 wiki도 함께 갱신한다. 대상: 모듈의 책임/동작 변경, 저장 파일 스키마 변경, 빌드/CI 절차 변경, 새 상수나 제약 추가.
-3. wiki 문서는 [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)을 따른다: YAML frontmatter(`type` 필수, `title`/`description`/`resource`/`tags`/`timestamp` 권장) + 마크다운 본문, 개념당 파일 하나, 디렉터리마다 `index.md`, 문서 간 상대 링크. 갱신 시 `timestamp`도 갱신할 것.
+1. **작업 시작 전 최신 코드 동기화**: `git pull origin main --rebase`(또는 `git fetch origin main && git rebase origin/main`)로 최신 main을 가져오고, 충돌이 있으면 해결한 뒤 작업을 시작한다. 오래된 코드 위에서 작업하면 이미 main에 반영된 변경(예: 플러그인 rename)을 놓친다.
+2. **작업 전**: `wiki/index.md`부터 읽고, 건드릴 모듈의 wiki 문서(`wiki/modules/*.md`)와 관련 storage/runbook 문서를 읽는다. 코드보다 wiki를 먼저 읽어야 아키텍처 불변 규칙과 함정(gotcha)을 놓치지 않는다.
+3. **작업 후**: 변경으로 인해 wiki 내용이 낡았는지 확인하고, 수정이 필요하면 같은 커밋(또는 같은 PR)에서 wiki도 함께 갱신한다. 대상: 모듈의 책임/동작 변경, 저장 파일 스키마 변경, 빌드/CI 절차 변경, 새 상수나 제약 추가.
+4. wiki 문서는 [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)을 따른다: YAML frontmatter(`type` 필수, `title`/`description`/`resource`/`tags`/`timestamp` 권장) + 마크다운 본문, 개념당 파일 하나, 디렉터리마다 `index.md`, 문서 간 상대 링크. 갱신 시 `timestamp`도 갱신할 것.
 
 ## 저장소 구조
 

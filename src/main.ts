@@ -32,7 +32,8 @@ export default class NotionSyncPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
+    const stored = (await this.loadData()) as Partial<NotionSyncSettings> | null;
+    this.settings = { ...DEFAULT_SETTINGS, ...stored };
   }
 
   async saveSettings(): Promise<void> {
