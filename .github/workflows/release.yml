@@ -22,7 +22,7 @@ jobs:
         id: version
         # Obsidian marketplace requires the release tag to exactly match
         # manifest.json's version, with no prefix
-        run: echo "tag=$(node -p "require('./manifest.json').version")" >> "$GITHUB_OUTPUT"
+        run: echo "tag=$(node -p 'require("./manifest.json").version')" >> "$GITHUB_OUTPUT"
       - name: Create release if it does not exist
         env:
           GH_TOKEN: ${{ github.token }}
