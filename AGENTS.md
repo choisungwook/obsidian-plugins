@@ -4,16 +4,15 @@
 
 ## 작업 절차 (필수)
 
-1. **작업 전**: 대상 플러그인 디렉터리의 `wiki/index.md`부터 읽고, 건드릴 모듈의 wiki 문서(`wiki/modules/*.md`)와 관련 storage/runbook 문서를 읽는다. 코드보다 wiki를 먼저 읽어야 아키텍처 불변 규칙과 함정(gotcha)을 놓치지 않는다.
+1. **작업 전**: `wiki/index.md`부터 읽고, 건드릴 모듈의 wiki 문서(`wiki/modules/*.md`)와 관련 storage/runbook 문서를 읽는다. 코드보다 wiki를 먼저 읽어야 아키텍처 불변 규칙과 함정(gotcha)을 놓치지 않는다.
 2. **작업 후**: 변경으로 인해 wiki 내용이 낡았는지 확인하고, 수정이 필요하면 같은 커밋(또는 같은 PR)에서 wiki도 함께 갱신한다. 대상: 모듈의 책임/동작 변경, 저장 파일 스키마 변경, 빌드/CI 절차 변경, 새 상수나 제약 추가.
 3. wiki 문서는 [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)을 따른다: YAML frontmatter(`type` 필수, `title`/`description`/`resource`/`tags`/`timestamp` 권장) + 마크다운 본문, 개념당 파일 하나, 디렉터리마다 `index.md`, 문서 간 상대 링크. 갱신 시 `timestamp`도 갱신할 것.
-4. 새 플러그인을 추가하면 `wiki/`를 같은 구조로 만들고 루트 `README.md`의 플러그인 표에 행을 추가한다.
 
 ## 저장소 구조
 
-- 플러그인 하나당 최상위 디렉터리 하나 (`obsidian-notion-sync/` 등)
-- 각 플러그인은 자체 `package.json`, `tsconfig.json`, 빌드 설정, 테스트를 가진 독립 패키지
-- 각 플러그인 디렉터리에 `wiki/`(Open Knowledge Format) 유지 — 코드를 바꾸면 관련 wiki 문서도 갱신할 것
+- 이 저장소는 **notion-sync 플러그인 전용 저장소**다. Obsidian 커뮤니티 마켓 등록 요건 때문에 `manifest.json`이 루트에 있어야 하며, 플러그인 소스·빌드 설정·테스트가 모두 루트 기준이다 (2026-07-17에 모노레포 구조에서 전환).
+- `wiki/`(Open Knowledge Format) 유지 — 코드를 바꾸면 관련 wiki 문서도 갱신할 것
+- 마켓 릴리스 절차는 `wiki/runbooks/marketplace-submission.md` 참고
 
 ## Code convention
 

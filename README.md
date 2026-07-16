@@ -1,16 +1,35 @@
-# obsidian-plugins
+# Obsidian Notion Sync
 
-옵시디언 플러그인 모음 저장소입니다. 각 플러그인은 독립된 디렉터리로 관리되며, 디렉터리마다 에이전트/사람이 읽을 수 있는 wiki를 포함합니다.
+Desktop-only Obsidian plugin that syncs every markdown note in your vault to Notion as child pages of a parent page.
 
-## Plugins
+## How it works
 
-| Plugin | Description | Link to docs |
-|--------|-------------|--------------|
-| [obsidian-notion-sync](obsidian-notion-sync/) | Vault의 마크다운 노트를 Notion 페이지로 동기화하는 데스크톱 전용 플러그인. sha256 해시 비교로 create/update/archive를 판정하고, Integration 토큰 또는 OAuth로 인증합니다. | [README](obsidian-notion-sync/README.md) · [Wiki](obsidian-notion-sync/wiki/index.md) |
+- Walks the whole vault, hashes each note with sha256, and compares against the last synced state (`~/.config/notion-sync/sync-state.json`).
+- New notes are created as Notion pages, changed notes are updated in place, and notes deleted from the vault are archived in Notion.
+- Notion API calls are throttled to 3 requests per second, and progress is shown via Obsidian notices.
 
-## Repository layout
+## Authentication
 
-- `<plugin>/` — 플러그인 소스, 빌드 설정, 테스트
-- `<plugin>/wiki/` — [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing) 기반 지식 문서 (다음 에이전트가 컨텍스트를 빠르게 파악하는 용도)
-- `AGENTS.md` — 코드 컨벤션과 작업 규칙 (에이전트 필독)
-- `.github/workflows/` — CI (테스트 + 빌드)
+Two options, selectable in the settings tab:
+
+1. **Integration token** — paste an internal integration secret from [notion.so/my-integrations](https://www.notion.so/my-integrations). Remember to share the parent page with the integration.
+2. **OAuth** — enter your public integration's client ID and secret, register `http://localhost:43110/callback` as its redirect URI, then click **Connect**. Your browser opens Notion's consent page and the plugin receives the code on a temporary localhost server.
+
+Credentials are stored in `~/.config/notion-sync/credentials.json` with `0600` permissions — never inside the vault, so syncing your vault with git or cloud storage cannot leak tokens.
+
+## Settings
+
+- **Notion parent page ID** — the page under which synced notes are created.
+- **Sync interval (minutes)** — `0` means manual only; otherwise the vault syncs automatically at that interval.
+- **Sync now** — trigger a sync immediately; the last sync time and result are shown next to the button.
+
+## Development
+
+```bash
+npm install
+npm run dev     # watch build
+npm test        # vitest unit tests
+npm run build   # type-check + production bundle (main.js)
+```
+
+Copy `main.js` and `manifest.json` into `<vault>/.obsidian/plugins/notion-sync/` to install a local build.

@@ -2,9 +2,9 @@
 type: Plugin
 title: Obsidian Notion Sync
 description: Desktop-only Obsidian plugin that syncs vault markdown notes to Notion child pages using sha256 diffing.
-resource: https://github.com/choisungwook/obsidian-plugins/tree/main/obsidian-notion-sync
+resource: https://github.com/choisungwook/obsidian-plugins
 tags: [obsidian, notion, sync, desktop-only]
-timestamp: 2026-07-16T15:30:00Z
+timestamp: 2026-07-17T00:00:00Z
 ---
 
 # Overview
