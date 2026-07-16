@@ -1,0 +1,36 @@
+---
+type: Runbook
+title: Development
+description: Build, test, and local-install procedure for obsidian-notion-sync.
+tags: [build, test, ci]
+timestamp: 2026-07-16T15:30:00Z
+---
+
+# Prerequisites
+
+Node 20+. 모든 명령은 `obsidian-notion-sync/` 디렉터리에서 실행.
+
+# Procedure
+
+```bash
+npm install
+npm test        # vitest — 순수 로직 단위 테스트
+npm run build   # tsc --noEmit 타입체크 + esbuild 프로덕션 번들 (main.js)
+npm run dev     # esbuild watch 모드
+```
+
+커밋 전 `npm test && npm run build`가 모두 통과해야 한다.
+
+# Local install
+
+`main.js`와 `manifest.json`을 `<vault>/.obsidian/plugins/obsidian-notion-sync/`에 복사 후 Obsidian에서 플러그인 활성화.
+
+# CI / Release
+
+- `.github/workflows/ci.yml` (Test): PR마다 `npm ci` → `npm test` → `npm run build` 실행
+- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 후 (테스트는 PR 단계에서 이미 통과했다고 가정하고 생략) `obsidian-notion-sync-<version>` 태그로 GitHub Release를 생성하고 `main.js`/`manifest.json`/`versions.json`을 첨부한다. 같은 태그의 릴리스가 이미 있으면 건너뛰므로, 릴리스를 내려면 `manifest.json`과 `versions.json`의 버전을 올려서 머지할 것
+
+# Notes for agents
+
+- `obsidian` 모듈은 실제 설치본이 타입 전용이다. 테스트에서는 `vitest.config.ts`의 alias가 `tests/obsidian-mock.ts`로 치환한다 — 목에 없는 API를 소스에서 새로 쓰면 목도 함께 갱신할 것
+- 빌드 산출물 `main.js`는 gitignore 대상이므로 커밋하지 말 것

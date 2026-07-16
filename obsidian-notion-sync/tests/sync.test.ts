@@ -1,0 +1,46 @@
+import { describe, expect, it } from "vitest";
+import { computeHash, planSync, SyncState } from "../src/sync";
+
+describe("computeHash", () => {
+  it("returns the sha256 hex digest", () => {
+    expect(computeHash("hello")).toBe(
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+    );
+  });
+
+  it("changes when content changes", () => {
+    expect(computeHash("a")).not.toBe(computeHash("b"));
+  });
+});
+
+describe("planSync", () => {
+  const state: SyncState = {
+    pages: {
+      "unchanged.md": { hash: computeHash("same"), pageId: "p1" },
+      "changed.md": { hash: computeHash("old"), pageId: "p2" },
+      "deleted.md": { hash: computeHash("gone"), pageId: "p3" },
+    },
+  };
+
+  it("classifies creates, updates, and archives", () => {
+    const current = {
+      "unchanged.md": computeHash("same"),
+      "changed.md": computeHash("new"),
+      "brand-new.md": computeHash("fresh"),
+    };
+    const plan = planSync(current, state);
+    expect(plan.creates).toEqual(["brand-new.md"]);
+    expect(plan.updates).toEqual(["changed.md"]);
+    expect(plan.archives).toEqual(["deleted.md"]);
+  });
+
+  it("returns an empty plan when nothing changed", () => {
+    const current = {
+      "unchanged.md": computeHash("same"),
+      "changed.md": computeHash("old"),
+      "deleted.md": computeHash("gone"),
+    };
+    const plan = planSync(current, state);
+    expect(plan).toEqual({ creates: [], updates: [], archives: [] });
+  });
+});
