@@ -21,7 +21,6 @@ jobs:
           cache: npm
           cache-dependency-path: obsidian-notion-sync/package-lock.json
       - run: npm ci
-      - run: npm test
       - run: npm run build
       - name: Resolve release tag from manifest
         id: version

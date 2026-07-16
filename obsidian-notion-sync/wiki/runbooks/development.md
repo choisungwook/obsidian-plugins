@@ -28,7 +28,7 @@ npm run dev     # esbuild watch 모드
 # CI / Release
 
 - `.github/workflows/ci.yml` (Test): PR마다 `npm ci` → `npm test` → `npm run build` 실행
-- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 후 `obsidian-notion-sync-<version>` 태그로 GitHub Release를 생성하고 `main.js`/`manifest.json`/`versions.json`을 첨부한다. 같은 태그의 릴리스가 이미 있으면 건너뛰므로, 릴리스를 내려면 `manifest.json`과 `versions.json`의 버전을 올려서 머지할 것
+- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 후 (테스트는 PR 단계에서 이미 통과했다고 가정하고 생략) `obsidian-notion-sync-<version>` 태그로 GitHub Release를 생성하고 `main.js`/`manifest.json`/`versions.json`을 첨부한다. 같은 태그의 릴리스가 이미 있으면 건너뛰므로, 릴리스를 내려면 `manifest.json`과 `versions.json`의 버전을 올려서 머지할 것
 
 # Notes for agents
 
