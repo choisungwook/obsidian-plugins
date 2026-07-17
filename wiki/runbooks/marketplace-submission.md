@@ -13,9 +13,9 @@ timestamp: 2026-07-17T16:30:00Z
 
 - 플러그인 ID에 `obsidian` 포함 금지 → ID는 `akbun-notion-sync` (2026-07-17에 `obsidian-notion-sync` → `notion-sync` → `akbun-notion-sync` 순으로 변경).
 - 저장소 루트에 `manifest.json`, `README.md`, `LICENSE`가 있어야 함 — 이 요건 때문에 2026-07-17에 모노레포 서브디렉터리 구조를 버리고 이 저장소(`choisungwook/obsidian-plugins`)를 플러그인 전용 저장소로 전환했다.
-- `manifest.json`의 `version`과 **정확히 같은 이름의 태그**로 GitHub Release를 만들고, `main.js`와 `manifest.json`을 개별 자산으로 첨부. 그 외 파일(`versions.json` 등)을 자산으로 붙이면 리뷰 봇이 "extra unsupported files" 경고를 낸다 (`versions.json`은 저장소에서 읽으므로 자산 불필요). `.github/workflows/release.yml`이 main 머지 시 자동으로 수행하며, 같은 버전의 릴리스가 이미 있으면 skip하지 않고 **태그와 자산을 모두** 현재 커밋 기준으로 갱신한다 (2026-07-17: rename 커밋이 릴리스에 반영되지 않아 마켓 리뷰에서 ID 불일치 에러가 났던 문제의 재발 방지).
+- `manifest.json`의 `version`과 **정확히 같은 이름의 태그**로 GitHub Release를 만들고, `main.js`와 `manifest.json`을 개별 자산으로 첨부. 그 외 파일(`versions.json` 등)을 자산으로 붙이면 리뷰 봇이 "extra unsupported files" 경고를 낸다 (`versions.json`은 저장소에서 읽으므로 자산 불필요). `.github/workflows/release.yml`이 main 머지 시 자동으로 수행한다.
 - 릴리스 자산에 GitHub artifact attestation을 권장 — workflow의 `actions/attest-build-provenance` step이 `main.js`/`manifest.json`에 대해 수행한다.
-- **attestation의 빌드 커밋과 릴리스 태그의 커밋이 일치해야 한다.** Obsidian은 "자산이 태그 커밋의 소스에서 빌드됐는가"를 검증하므로, 태그는 옛 커밋을 가리키는데 자산만 새 커밋 빌드로 갈아끼우면 `main.js release asset has an attestation that failed cryptographic verification` 에러가 난다 (2026-07-17에 0.1.1에서 실제 발생 — 태그가 79ce54a를 가리킨 채 자산은 e25ce38 빌드로 clobber됨). 이 때문에 workflow의 refresh 경로는 자산 업로드 전에 태그 ref를 현재 커밋으로 force-update한다.
+- **한 번 릴리스된 버전은 절대 덮어쓰지 않는다. 변경은 항상 새 버전으로 릴리스한다.** Obsidian은 "자산이 태그 커밋의 소스에서 빌드됐는가"를 검증하므로, 기존 태그의 자산만 새 커밋 빌드로 갈아끼우면 `main.js release asset has an attestation that failed cryptographic verification` 에러가 난다 (2026-07-17에 0.1.1에서 실제 발생 — 태그가 79ce54a를 가리킨 채 자산은 e25ce38 빌드로 clobber됨). 이 때문에 workflow는 같은 버전의 릴리스가 이미 있으면 실패하며, PR에서 `manifest.json`/`versions.json` 버전을 올려야 한다.
 - ID/이름이 기존 커뮤니티 플러그인과 중복 금지 — 기존 마켓에 "Notion Sync" 계열 플러그인이 이미 있어 2026-07-17에 `akbun-notion-sync` / `Akbun Notion Sync`로 변경.
 
 ## 절차
@@ -41,4 +41,4 @@ timestamp: 2026-07-17T16:30:00Z
 
 - `community-plugins.json`의 `id`/`name`/`description`은 이 저장소 `manifest.json`과 정확히 일치해야 한다.
 - 최초 등록 이후의 버전 릴리스는 새 태그만 만들면 마켓에 자동 반영된다 (PR 재제출 불필요). `manifest.json`과 `versions.json`의 버전을 함께 올릴 것.
-- 버전 bump는 main 머지 시점이 아니라 **코드를 수정하는 PR 안에서** patch 단위로 수행한다 (문서·CI만 바꾼 PR은 제외). release workflow는 버전을 올리지 않고 manifest 버전을 그대로 태그로 사용하므로, PR에서 bump를 빠뜨리면 새 릴리스가 생기지 않는다. 상세 규칙은 저장소 루트 `AGENTS.md`의 "버전 관리" 절 참고.
+- 버전 bump는 main 머지 시점이 아니라 **모든 PR 안에서** patch 단위로 수행한다. release workflow는 버전을 올리지 않고 manifest 버전을 그대로 태그로 사용하며, 같은 버전의 릴리스가 이미 있으면 덮어쓰지 않고 실패한다. 상세 규칙은 저장소 루트 `AGENTS.md`의 "버전 관리" 절 참고.
