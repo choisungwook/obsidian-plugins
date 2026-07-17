@@ -4,7 +4,7 @@ title: Obsidian Community Plugin Marketplace Submission
 description: Procedure for publishing akbun-notion-sync to the Obsidian community plugin marketplace.
 resource: https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin
 tags: [obsidian, marketplace, release, submission]
-timestamp: 2026-07-17T12:00:00Z
+timestamp: 2026-07-17T15:00:00Z
 ---
 
 # Obsidian 커뮤니티 마켓 제출
@@ -40,3 +40,4 @@ timestamp: 2026-07-17T12:00:00Z
 
 - `community-plugins.json`의 `id`/`name`/`description`은 이 저장소 `manifest.json`과 정확히 일치해야 한다.
 - 최초 등록 이후의 버전 릴리스는 새 태그만 만들면 마켓에 자동 반영된다 (PR 재제출 불필요). `manifest.json`과 `versions.json`의 버전을 함께 올릴 것.
+- 버전 bump는 main 머지 시점이 아니라 **코드를 수정하는 PR 안에서** patch 단위로 수행한다 (문서·CI만 바꾼 PR은 제외). release workflow는 버전을 올리지 않고 manifest 버전을 그대로 태그로 사용하므로, PR에서 bump를 빠뜨리면 새 릴리스가 생기지 않는다. 상세 규칙은 저장소 루트 `AGENTS.md`의 "버전 관리" 절 참고.
