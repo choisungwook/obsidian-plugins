@@ -4,60 +4,48 @@
 
 ## 작업 절차 (필수)
 
-1. **작업 시작 전 최신 코드 동기화**: `git pull origin main --rebase`(또는 `git fetch origin main && git rebase origin/main`)로 최신 main을 가져오고, 충돌이 있으면 해결한 뒤 작업을 시작한다. 오래된 코드 위에서 작업하면 이미 main에 반영된 변경(예: 플러그인 rename)을 놓친다.
-2. **작업 전**: `wiki/index.md`부터 읽고, 건드릴 모듈의 wiki 문서(`wiki/modules/*.md`)와 관련 storage/runbook 문서를 읽는다. 코드보다 wiki를 먼저 읽어야 아키텍처 불변 규칙과 함정(gotcha)을 놓치지 않는다.
-3. **작업 후**: 변경으로 인해 wiki 내용이 낡았는지 확인하고, 수정이 필요하면 같은 커밋(또는 같은 PR)에서 wiki도 함께 갱신한다. 대상: 모듈의 책임/동작 변경, 저장 파일 스키마 변경, 빌드/CI 절차 변경, 새 상수나 제약 추가.
-4. wiki 문서는 [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)을 따른다: YAML frontmatter(`type` 필수, `title`/`description`/`resource`/`tags`/`timestamp` 권장) + 마크다운 본문, 개념당 파일 하나, 디렉터리마다 `index.md`, 문서 간 상대 링크. 갱신 시 `timestamp`도 갱신할 것.
+1. 시작 전 `git pull origin main --rebase`로 최신 main 동기화.
+2. 작업 전 `wiki/index.md` → 건드릴 모듈의 wiki 문서를 먼저 읽는다 (아키텍처 불변 규칙과 함정이 wiki에 있다).
+3. 작업 후 변경으로 낡아진 wiki 문서를 같은 PR에서 갱신한다 (책임/동작·스키마·빌드/CI·상수 변경 시).
+4. wiki는 [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing): frontmatter(`type` 필수) + 개념당 파일 하나 + 디렉터리별 `index.md` + 상대 링크. 갱신 시 `timestamp`도 갱신.
 
 ## 버전 관리 (필수)
 
-- **버전을 올리기 전에 반드시 `wiki/runbooks/marketplace-submission.md`를 읽는다.** 태그 이름 규칙, 릴리스 자산 제약 등 마켓 요건을 어기면 마켓 반영이 실패한다.
-- **모든 PR에는 반드시 버전 bump를 포함한다.** `manifest.json`의 `version`을 patch 단위(+0.0.1)로 올리고, `versions.json`에 `"새버전": "minAppVersion"` 항목을 함께 추가한다.
-- **한 번 릴리스된 버전은 절대 덮어쓰지 않는다.** Obsidian이 릴리스 자산의 attestation을 태그 커밋 기준으로 검증하므로, 기존 릴리스의 자산을 갈아끼우면 마켓 검증이 실패한다. 변경은 항상 새 버전으로 릴리스한다.
-- **릴리스마다 `main.js` 바이트가 유일해야 한다.** attestation은 파일의 sha256 digest에 붙으므로, 소스 변경 없이 버전만 올리면 같은 digest에 여러 커밋의 attestation이 쌓여 마켓 검증이 실패한다 (0.1.2에서 실제 발생). 이를 위해 `esbuild.config.mjs`가 `manifest.json`의 version을 배너 주석으로 `main.js`에 심는다 — **이 배너를 제거하지 말 것.** 상세는 `wiki/runbooks/marketplace-submission.md` 참고.
-- main 머지 시 `.github/workflows/release.yml`이 `manifest.json`의 version과 같은 이름의 태그로 릴리스를 자동 생성한다. 워크플로우는 버전을 올리지 않으며, 같은 버전의 릴리스가 이미 있으면 덮어쓰지 않고 실패한다. PR에서 bump를 빠뜨리면 릴리스가 실패하므로 반드시 PR 안에서 올린다.
-- minor/major 올림이 필요하면 PR에서 직접 해당 단위로 올린다 (워크플로우는 버전을 그대로 존중한다).
+- 버전을 올리기 전에 반드시 `wiki/runbooks/marketplace-submission.md`를 읽는다.
+- **모든 PR에 버전 bump 포함**: `manifest.json` version을 patch(+0.0.1)로 올리고 `versions.json`에 `"새버전": "minAppVersion"` 추가. minor/major가 필요하면 PR에서 직접 올린다.
+- **릴리스된 버전은 절대 덮어쓰지 않는다.** Obsidian이 자산의 attestation을 태그 커밋 기준으로 검증하므로, 변경은 항상 새 버전으로 릴리스한다.
+- **릴리스마다 `main.js` 바이트가 유일해야 한다.** attestation은 sha256 digest에 붙어서, 동일 바이트를 여러 버전으로 릴리스하면 검증이 실패한다 (0.1.2에서 발생). `esbuild.config.mjs`의 버전 배너가 이를 보장한다 — 배너를 제거하지 말 것.
+- main 머지 시 `.github/workflows/release.yml`이 manifest version과 같은 이름의 태그로 릴리스를 자동 생성한다. 워크플로우는 버전을 올리지 않으며, 같은 버전의 릴리스가 이미 있으면 실패한다.
 
 ## 저장소 구조
 
-- 이 저장소는 **akbun-notion-sync 플러그인 전용 저장소**다. Obsidian 커뮤니티 마켓 등록 요건 때문에 `manifest.json`이 루트에 있어야 하며, 플러그인 소스·빌드 설정·테스트가 모두 루트 기준이다 (2026-07-17에 모노레포 구조에서 전환).
-- `wiki/`(Open Knowledge Format) 유지 — 코드를 바꾸면 관련 wiki 문서도 갱신할 것
-- 마켓 릴리스 절차는 `wiki/runbooks/marketplace-submission.md` 참고
+- **akbun-notion-sync 플러그인 전용 저장소** — 마켓 요건상 `manifest.json`이 루트에 있어야 하며, 소스·빌드·테스트가 모두 루트 기준 (2026-07-17 모노레포에서 전환).
+- 마켓 릴리스 절차: `wiki/runbooks/marketplace-submission.md`
 
 ## Code convention
 
-### 기본 규칙
-
-- TypeScript strict 모드, indent 2칸
-- 파일은 역할별로 분리: 진입점(`main.ts`) / UI(`settings.ts`) / 도메인 로직(`sync.ts`) / 외부 API 클라이언트(`notion-client.ts`) 패턴을 따를 것
-- 빌드는 esbuild, 테스트는 vitest
-
-### 가독성이 좋은 코드
-
-- **의미 없는 주석 금지.** 코드가 스스로 설명하게 하고, 주석은 코드로 표현할 수 없는 제약(왜 이 값인지, 어떤 외부 제한 때문인지)에만 사용
-- 이름으로 의도를 드러낼 것: `tick()`보다 나쁜 예는 `fn1()`, 좋은 예는 `flushParagraph()` 처럼 동작을 그대로 말하는 이름
-- 함수는 한 가지 일만: 판정(`planSync`)과 실행(`applyPlan`)을 분리하듯, 순수 로직과 부수효과를 나눌 것
-- 순수 함수를 우선 — 테스트하기 쉬운 코드가 읽기도 쉽다. I/O와 API 호출은 얇은 계층으로 밀어낼 것
-- 매직 넘버는 이름 있는 상수로 (`MAX_BLOCKS_PER_REQUEST = 100`)
-- 이른 반환(early return)으로 중첩을 줄일 것
-- 에러는 삼키지 말 것: 구체적으로 처리하거나(`ENOENT`만 fallback) 그대로 던질 것
+- TypeScript strict, indent 2칸, esbuild 빌드, vitest 테스트
+- 파일은 역할별 분리: 진입점(`main.ts`) / UI(`settings.ts`) / 도메인 로직(`sync.ts`) / API 클라이언트(`notion-client.ts`)
+- 의미 없는 주석 금지 — 주석은 코드로 표현할 수 없는 제약에만
+- 이름으로 의도를 드러내고(`flushParagraph()`), 함수는 한 가지 일만 — 판정(`planSync`)과 실행(`applyPlan`) 분리
+- 순수 함수 우선, I/O·API 호출은 얇은 계층으로. 매직 넘버는 이름 있는 상수로. early return으로 중첩 축소
+- 에러를 삼키지 말 것: 구체적으로 처리하거나(`ENOENT`만 fallback) 그대로 던질 것
 
 ### 보안
 
-- 토큰/시크릿을 vault 안(`data.json`)이나 저장소에 절대 저장하지 말 것
-- 자격증명 파일은 `~/.config/<plugin-id>/` 아래에 `0600` 권한으로 저장
-- OAuth는 `state` 파라미터로 CSRF를 방어할 것
+- 토큰/시크릿을 vault(`data.json`)나 저장소에 저장 금지 — 자격증명은 `~/.config/<plugin-id>/`에 `0600` 권한으로
+- OAuth는 `state` 파라미터로 CSRF 방어
 
 ## 테스트
 
-- 순수 로직(해시, 판정, 변환, 스로틀)은 반드시 단위 테스트 작성
-- `obsidian` 모듈은 vitest alias로 목 처리 (`tests/obsidian-mock.ts` 참고)
-- fake timer 사용 시 try/finally로 반드시 복원
+- 순수 로직(해시, 판정, 변환, 스로틀)은 단위 테스트 필수
+- `obsidian` 모듈은 vitest alias로 목 처리 (`tests/obsidian-mock.ts`)
+- fake timer는 try/finally로 복원
 - 커밋 전 `npm test && npm run build` 통과 확인
 
 ## Git
 
 - 커밋 메시지는 명령형 현재 시제로, 무엇을 왜 바꿨는지 요약
-- 빌드 산출물(`main.js`, `node_modules/`)은 커밋하지 말 것 (`.gitignore` 참고)
-- PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 템플릿(`## Goal`, `## What changed`)을 따를 것 — `gh pr create`는 템플릿을 자동 적용하지 않으므로 `--body`에 템플릿 구조를 직접 채워서 작성한다
-- PR 리뷰 코멘트를 반영할 때는 하나의 커밋으로 묶고 항목별로 커밋 메시지에 나열
+- 빌드 산출물(`main.js`, `node_modules/`) 커밋 금지
+- PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md`(`## Goal`, `## What changed`) 구조를 `gh pr create --body`에 직접 채운다
+- 리뷰 코멘트 반영은 하나의 커밋으로 묶고 항목별로 커밋 메시지에 나열
