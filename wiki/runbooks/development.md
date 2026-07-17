@@ -3,7 +3,7 @@ type: Runbook
 title: Development
 description: Build, test, and local-install procedure for the akbun-notion-sync plugin.
 tags: [build, test, ci]
-timestamp: 2026-07-17T04:10:00Z
+timestamp: 2026-07-17T09:00:00Z
 ---
 
 # Prerequisites
@@ -28,7 +28,8 @@ npm run dev     # esbuild watch 모드
 # CI / Release
 
 - `.github/workflows/ci.yml` (Test): PR마다 `npm ci` → `npm test` → `npm run build` 실행
-- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 (테스트는 PR 단계에서 이미 통과했다고 가정하고 생략) → 같은 버전의 릴리스가 이미 있으면 **attest 전에** 실패 (동일 바이트 digest에 attestation이 중복으로 쌓이는 것 방지) → `actions/attest-build-provenance@v4`로 `main.js`/`manifest.json` attestation 생성 → attestation이 공개 API의 `gh attestation verify`로 검증될 때까지 대기(최대 10회×15초) → `softprops/action-gh-release@v2`가 manifest 버전과 동일한 태그(예: `0.1.0`)로 GitHub Release를 생성하고 `main.js`/`manifest.json`을 첨부한다. Obsidian 마켓이 이 태그 형식을 요구한다. 모든 PR에서 `manifest.json`과 `versions.json`의 버전을 올릴 것
+- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 (테스트는 PR 단계에서 이미 통과했다고 가정하고 생략) → 같은 버전의 릴리스가 이미 있으면 **attest 전에** 실패 (동일 바이트 digest에 attestation이 중복으로 쌓이는 것 방지) → `actions/attest-build-provenance`로 `main.js`/`manifest.json` attestation 생성 → attestation이 공개 API의 `gh attestation verify`로 검증될 때까지 대기(최대 10회×15초) → `gh release create`가 manifest 버전과 동일한 태그(예: `0.1.0`)로 GitHub Release를 생성하고 `main.js`/`manifest.json`을 첨부한다. Obsidian 마켓이 이 태그 형식을 요구한다. 모든 PR에서 `manifest.json`과 `versions.json`의 버전을 올릴 것
+- **release.yml의 공급망 정책**: 서드파티 액션 금지 — gh CLI나 러너 기본 도구로 되는 일은 plain step으로 수행한다 (릴리스 생성은 `gh release create`, Node는 러너 프리인스톨 사용으로 `actions/setup-node` 제거). CLI 대체가 없는 GitHub 공식 액션 두 개(`actions/checkout`, `actions/attest-build-provenance` — attestation 서명은 러너 OIDC가 필요해 gh CLI로 불가)만 남기고, 태그 대신 **전체 커밋 SHA로 핀 고정**한다. 액션을 추가하거나 핀을 풀지 말 것
 
 # Notes for agents
 

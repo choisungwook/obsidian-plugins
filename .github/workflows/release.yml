@@ -9,15 +9,17 @@ permissions:
   id-token: write
   attestations: write
 
+# Supply-chain policy: third-party actions are forbidden; anything gh CLI or
+# the runner can do natively runs as a plain step. The two remaining actions
+# are GitHub first-party, kept only because they have no CLI equivalent
+# (checkout, attestation signing), and are pinned to full commit SHAs.
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: npm
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      # Node comes preinstalled on ubuntu-latest; setup-node was dropped to
+      # keep the action surface minimal.
       - run: npm ci
       - run: npm run build
       - name: Resolve release tag from manifest
@@ -41,7 +43,9 @@ jobs:
             exit 1
           fi
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v4
+        # Attestation signing needs the runner's OIDC identity; gh CLI can only
+        # verify attestations, not create them, so this first-party action stays.
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: |
             main.js
@@ -64,15 +68,15 @@ jobs:
           echo "::error::Attestations are still not verifiable via the GitHub API; aborting release."
           exit 1
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
         # Obsidian downloads only main.js and manifest.json from the release;
-        # extra assets like versions.json trigger review warnings.
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
-          generate_release_notes: true
-          files: |
-            main.js
-            manifest.json
+        # extra assets like versions.json trigger review warnings. --target
+        # pins the tag to the attested commit, matching what Obsidian verifies.
+        run: |
+          gh release create "$TAG" main.js manifest.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes
