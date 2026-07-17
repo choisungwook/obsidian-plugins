@@ -3,7 +3,7 @@ type: Runbook
 title: Development
 description: Build, test, and local-install procedure for the akbun-notion-sync plugin.
 tags: [build, test, ci]
-timestamp: 2026-07-17T04:10:00Z
+timestamp: 2026-07-17T06:18:55Z
 ---
 
 # Prerequisites
@@ -28,7 +28,7 @@ npm run dev     # esbuild watch 모드
 # CI / Release
 
 - `.github/workflows/ci.yml` (Test): PR마다 `npm ci` → `npm test` → `npm run build` 실행
-- `.github/workflows/release.yml` (Release): main에 머지되면 빌드 (테스트는 PR 단계에서 이미 통과했다고 가정하고 생략) → 같은 버전의 릴리스가 이미 있으면 **attest 전에** 실패 (동일 바이트 digest에 attestation이 중복으로 쌓이는 것 방지) → `actions/attest-build-provenance@v4`로 `main.js`/`manifest.json` attestation 생성 → attestation이 공개 API의 `gh attestation verify`로 검증될 때까지 대기(최대 10회×15초) → `softprops/action-gh-release@v2`가 manifest 버전과 동일한 태그(예: `0.1.0`)로 GitHub Release를 생성하고 `main.js`/`manifest.json`을 첨부한다. Obsidian 마켓이 이 태그 형식을 요구한다. 모든 PR에서 `manifest.json`과 `versions.json`의 버전을 올릴 것
+- `.github/workflows/release.yml` (Release): manifest version과 같은 태그가 push되면 해당 태그 커밋을 빌드한다 → 같은 버전의 릴리스가 이미 있으면 **attest 전에** 실패한다 → `actions/attest-build-provenance@v4`로 `main.js`/`manifest.json`을 attest한다 → 공개 API에서 서명뿐 아니라 provenance의 source/workflow ref가 현재 태그이고 source digest가 현재 커밋인지 확인한다 → `softprops/action-gh-release@v2`가 `main.js`/`manifest.json`을 첨부한 GitHub Release를 생성한다. 모든 PR에서 `manifest.json`과 `versions.json`의 버전을 올리고, main 머지 후 그 버전 태그를 push할 것
 
 # Notes for agents
 

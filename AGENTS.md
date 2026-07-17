@@ -15,7 +15,7 @@
 - **모든 PR에 버전 bump 포함**: `manifest.json` version을 patch(+0.0.1)로 올리고 `versions.json`에 `"새버전": "minAppVersion"` 추가. minor/major가 필요하면 PR에서 직접 올린다.
 - **릴리스된 버전은 절대 덮어쓰지 않는다.** Obsidian이 자산의 attestation을 태그 커밋 기준으로 검증하므로, 변경은 항상 새 버전으로 릴리스한다.
 - **릴리스마다 `main.js` 바이트가 유일해야 한다.** attestation은 sha256 digest에 붙어서, 동일 바이트를 여러 버전으로 릴리스하면 검증이 실패한다 (0.1.2에서 발생). `esbuild.config.mjs`의 버전 배너가 이를 보장한다 — 배너를 제거하지 말 것.
-- main 머지 시 `.github/workflows/release.yml`이 manifest version과 같은 이름의 태그로 릴리스를 자동 생성한다. 워크플로우는 버전을 올리지 않으며, 같은 버전의 릴리스가 이미 있으면 실패한다.
+- main 머지 후 manifest version과 같은 이름의 태그를 push하면 `.github/workflows/release.yml`이 릴리스를 자동 생성한다. 워크플로우는 버전을 올리지 않으며, 같은 버전의 릴리스가 이미 있으면 실패한다.
 
 ## 저장소 구조
 
