@@ -4,7 +4,7 @@ title: Obsidian Community Plugin Marketplace Submission
 description: Procedure for publishing akbun-notion-sync to the Obsidian community plugin marketplace.
 resource: https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin
 tags: [obsidian, marketplace, release, submission]
-timestamp: 2026-07-17T16:30:00Z
+timestamp: 2026-07-17T17:00:00Z
 ---
 
 # Obsidian 커뮤니티 마켓 제출
@@ -17,6 +17,7 @@ timestamp: 2026-07-17T16:30:00Z
 - 릴리스 자산에 GitHub artifact attestation을 권장 — workflow의 `actions/attest-build-provenance` step이 `main.js`/`manifest.json`에 대해 수행한다.
 - **한 번 릴리스된 버전은 절대 덮어쓰지 않는다. 변경은 항상 새 버전으로 릴리스한다.** Obsidian은 "자산이 태그 커밋의 소스에서 빌드됐는가"를 검증하므로, 기존 태그의 자산만 새 커밋 빌드로 갈아끼우면 `main.js release asset has an attestation that failed cryptographic verification` 에러가 난다 (2026-07-17에 0.1.1에서 실제 발생 — 태그가 79ce54a를 가리킨 채 자산은 e25ce38 빌드로 clobber됨). 이 때문에 workflow는 같은 버전의 릴리스가 이미 있으면 실패하며, PR에서 `manifest.json`/`versions.json` 버전을 올려야 한다.
 - ID/이름이 기존 커뮤니티 플러그인과 중복 금지 — 기존 마켓에 "Notion Sync" 계열 플러그인이 이미 있어 2026-07-17에 `akbun-notion-sync` / `Akbun Notion Sync`로 변경.
+- **릴리스마다 `main.js` 바이트가 달라야 한다.** GitHub attestation은 자산의 sha256 digest 단위로 조회되므로, 소스가 안 바뀐 채 버전만 올리면 동일한 `main.js` digest에 여러 커밋의 attestation이 쌓이고, Obsidian의 태그 커밋 대조 검증이 `attestation ... failed cryptographic verification` 에러로 실패한다 (2026-07-17에 0.1.2에서 실제 발생 — 0.1.0~0.1.2의 `main.js`가 모두 동일 바이트라 attestation 4개가 한 digest에 붙음). 이를 막기 위해 `esbuild.config.mjs`가 `manifest.json`의 version을 배너 주석으로 `main.js`에 심는다. 배너를 제거하지 말 것.
 
 ## 절차
 
