@@ -14,6 +14,7 @@
 - **버전을 올리기 전에 반드시 `wiki/runbooks/marketplace-submission.md`를 읽는다.** 태그 이름 규칙, 릴리스 자산 제약 등 마켓 요건을 어기면 마켓 반영이 실패한다.
 - **모든 PR에는 반드시 버전 bump를 포함한다.** `manifest.json`의 `version`을 patch 단위(+0.0.1)로 올리고, `versions.json`에 `"새버전": "minAppVersion"` 항목을 함께 추가한다.
 - **한 번 릴리스된 버전은 절대 덮어쓰지 않는다.** Obsidian이 릴리스 자산의 attestation을 태그 커밋 기준으로 검증하므로, 기존 릴리스의 자산을 갈아끼우면 마켓 검증이 실패한다. 변경은 항상 새 버전으로 릴리스한다.
+- **릴리스마다 `main.js` 바이트가 유일해야 한다.** attestation은 파일의 sha256 digest에 붙으므로, 소스 변경 없이 버전만 올리면 같은 digest에 여러 커밋의 attestation이 쌓여 마켓 검증이 실패한다 (0.1.2에서 실제 발생). 이를 위해 `esbuild.config.mjs`가 `manifest.json`의 version을 배너 주석으로 `main.js`에 심는다 — **이 배너를 제거하지 말 것.** 상세는 `wiki/runbooks/marketplace-submission.md` 참고.
 - main 머지 시 `.github/workflows/release.yml`이 `manifest.json`의 version과 같은 이름의 태그로 릴리스를 자동 생성한다. 워크플로우는 버전을 올리지 않으며, 같은 버전의 릴리스가 이미 있으면 덮어쓰지 않고 실패한다. PR에서 bump를 빠뜨리면 릴리스가 실패하므로 반드시 PR 안에서 올린다.
 - minor/major 올림이 필요하면 PR에서 직접 해당 단위로 올린다 (워크플로우는 버전을 그대로 존중한다).
 
