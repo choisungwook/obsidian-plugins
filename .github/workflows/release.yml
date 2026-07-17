@@ -54,10 +54,11 @@ jobs:
             local result
             result=$(gh attestation verify "$subject" --repo "$GITHUB_REPOSITORY" --format json) || return 1
             jq -e --arg ref "$GITHUB_REF" --arg sha "$GITHUB_SHA" '
-              any(.[].verificationResult.signature.certificate;
-                .sourceRepositoryRef == $ref and
-                .githubWorkflowRef == $ref and
-                .sourceRepositoryDigest == $sha
+              any(.[];
+                .verificationResult.signature.certificate as $certificate |
+                $certificate.sourceRepositoryRef == $ref and
+                $certificate.githubWorkflowRef == $ref and
+                $certificate.sourceRepositoryDigest == $sha
               )
             ' <<< "$result" > /dev/null
           }
