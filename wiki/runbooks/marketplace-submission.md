@@ -4,7 +4,7 @@ title: Obsidian Community Plugin Marketplace Submission
 description: Procedure for publishing akbun-notion-sync to the Obsidian community plugin marketplace.
 resource: https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin
 tags: [obsidian, marketplace, release, submission]
-timestamp: 2026-07-17T15:00:00Z
+timestamp: 2026-07-17T16:30:00Z
 ---
 
 # Obsidian 커뮤니티 마켓 제출
@@ -13,8 +13,9 @@ timestamp: 2026-07-17T15:00:00Z
 
 - 플러그인 ID에 `obsidian` 포함 금지 → ID는 `akbun-notion-sync` (2026-07-17에 `obsidian-notion-sync` → `notion-sync` → `akbun-notion-sync` 순으로 변경).
 - 저장소 루트에 `manifest.json`, `README.md`, `LICENSE`가 있어야 함 — 이 요건 때문에 2026-07-17에 모노레포 서브디렉터리 구조를 버리고 이 저장소(`choisungwook/obsidian-plugins`)를 플러그인 전용 저장소로 전환했다.
-- `manifest.json`의 `version`과 **정확히 같은 이름의 태그**로 GitHub Release를 만들고, `main.js`와 `manifest.json`을 개별 자산으로 첨부. 그 외 파일(`versions.json` 등)을 자산으로 붙이면 리뷰 봇이 "extra unsupported files" 경고를 낸다 (`versions.json`은 저장소에서 읽으므로 자산 불필요). `.github/workflows/release.yml`이 main 머지 시 자동으로 수행하며, 같은 버전의 릴리스가 이미 있으면 skip하지 않고 현재 커밋 기준으로 자산을 갱신한다 (2026-07-17: rename 커밋이 릴리스에 반영되지 않아 마켓 리뷰에서 ID 불일치 에러가 났던 문제의 재발 방지).
+- `manifest.json`의 `version`과 **정확히 같은 이름의 태그**로 GitHub Release를 만들고, `main.js`와 `manifest.json`을 개별 자산으로 첨부. 그 외 파일(`versions.json` 등)을 자산으로 붙이면 리뷰 봇이 "extra unsupported files" 경고를 낸다 (`versions.json`은 저장소에서 읽으므로 자산 불필요). `.github/workflows/release.yml`이 main 머지 시 자동으로 수행하며, 같은 버전의 릴리스가 이미 있으면 skip하지 않고 **태그와 자산을 모두** 현재 커밋 기준으로 갱신한다 (2026-07-17: rename 커밋이 릴리스에 반영되지 않아 마켓 리뷰에서 ID 불일치 에러가 났던 문제의 재발 방지).
 - 릴리스 자산에 GitHub artifact attestation을 권장 — workflow의 `actions/attest-build-provenance` step이 `main.js`/`manifest.json`에 대해 수행한다.
+- **attestation의 빌드 커밋과 릴리스 태그의 커밋이 일치해야 한다.** Obsidian은 "자산이 태그 커밋의 소스에서 빌드됐는가"를 검증하므로, 태그는 옛 커밋을 가리키는데 자산만 새 커밋 빌드로 갈아끼우면 `main.js release asset has an attestation that failed cryptographic verification` 에러가 난다 (2026-07-17에 0.1.1에서 실제 발생 — 태그가 79ce54a를 가리킨 채 자산은 e25ce38 빌드로 clobber됨). 이 때문에 workflow의 refresh 경로는 자산 업로드 전에 태그 ref를 현재 커밋으로 force-update한다.
 - ID/이름이 기존 커뮤니티 플러그인과 중복 금지 — 기존 마켓에 "Notion Sync" 계열 플러그인이 이미 있어 2026-07-17에 `akbun-notion-sync` / `Akbun Notion Sync`로 변경.
 
 ## 절차

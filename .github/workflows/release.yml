@@ -36,10 +36,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
         # Obsidian downloads only main.js and manifest.json from the release;
-        # extra assets like versions.json trigger review warnings
+        # extra assets like versions.json trigger review warnings.
+        # When refreshing, the tag must also move to the current commit:
+        # Obsidian verifies that the assets' attestation was built from the
+        # tag's commit, so stale tag + refreshed assets fails attestation.
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "Release $TAG already exists, refreshing assets from current commit"
+            echo "Release $TAG already exists, refreshing tag and assets from current commit"
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" \
+              -f sha="$GITHUB_SHA" -F force=true
             gh release upload "$TAG" main.js manifest.json \
               --repo "$GITHUB_REPOSITORY" --clobber
           else
