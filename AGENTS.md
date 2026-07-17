@@ -11,6 +11,7 @@
 
 ## 버전 관리 (필수)
 
+- **버전을 올리기 전에 반드시 `wiki/runbooks/marketplace-submission.md`를 읽는다.** 태그 이름 규칙, 릴리스 자산 제약 등 마켓 요건을 어기면 마켓 반영이 실패한다.
 - **코드를 수정하는 PR에는 반드시 버전 bump를 포함한다.** `manifest.json`의 `version`을 patch 단위(+0.0.1)로 올리고, `versions.json`에 `"새버전": "minAppVersion"` 항목을 함께 추가한다.
 - 버전 bump 대상은 플러그인 산출물에 영향을 주는 변경만이다: `src/`, `manifest.json`, 빌드 설정(`esbuild.config.mjs`, `tsconfig.json`, 의존성). wiki/README/CI 등 문서·인프라만 바꾼 PR은 버전을 올리지 않는다.
 - main 머지 시 `.github/workflows/release.yml`이 `manifest.json`의 version과 같은 이름의 태그로 릴리스를 자동 생성한다. 워크플로우는 버전을 올리지 않으므로, PR에서 bump를 빠뜨리면 새 릴리스가 생기지 않고 기존 릴리스 자산만 갱신된다.
