@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { createServer, Server } from "http";
 import { join } from "path";
-import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting, SettingDefinitionItem } from "obsidian";
 import type NotionSyncPlugin from "./main";
 import { buildAuthorizationUrl, exchangeOAuthCode } from "./notion-client";
 import { CONFIG_DIR, readJsonFile, writeJsonFile } from "./sync";
@@ -53,7 +53,7 @@ export async function resolveToken(method: AuthMethod): Promise<string | null> {
 
 function waitForOAuthCallback(server: Server, expectedState: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
+    const timer = window.setTimeout(() => {
       server.close();
       reject(new Error("Timed out waiting for the OAuth callback"));
     }, timeoutMs);
@@ -74,7 +74,7 @@ function waitForOAuthCallback(server: Server, expectedState: string, timeoutMs: 
           ? "<h3>Authorization failed. You can close this tab.</h3>"
           : "<h3>Authorized. You can close this tab and return to Obsidian.</h3>"
       );
-      clearTimeout(timer);
+      window.clearTimeout(timer);
       server.close();
       if (stateMismatch) {
         reject(new Error("OAuth state mismatch — possible CSRF, aborting"));
@@ -109,162 +109,165 @@ async function runOAuthFlow(clientId: string, clientSecret: string): Promise<Cre
 }
 
 export class NotionSyncSettingTab extends PluginSettingTab {
+  private pendingClientSecret = "";
+
   constructor(app: App, private plugin: NotionSyncPlugin) {
     super(app, plugin);
   }
 
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      {
+        name: "Notion parent page ID",
+        desc: "Synced notes are created as child pages of this Notion page.",
+        control: { type: "text", key: "parentPageId", placeholder: "e.g. 1a2b3c4d5e6f..." },
+      },
+      {
+        name: "Authentication method",
+        desc: "Credentials are stored in ~/.config/akbun-notion-sync/credentials.json, never inside the vault.",
+        control: {
+          type: "dropdown",
+          key: "authMethod",
+          options: { token: "Integration token", oauth: "OAuth" },
+        },
+      },
+      {
+        name: "Integration token",
+        desc: "Internal integration secret from notion.so/my-integrations.",
+        visible: () => this.plugin.settings.authMethod === "token",
+        render: (setting) => this.renderIntegrationToken(setting),
+      },
+      {
+        name: "OAuth client ID",
+        desc: `Register ${OAUTH_REDIRECT_URI} as the redirect URI in your Notion public integration.`,
+        visible: () => this.plugin.settings.authMethod === "oauth",
+        control: { type: "text", key: "oauthClientId" },
+      },
+      {
+        name: "OAuth client secret",
+        desc: "Only needed when connecting; stored outside the vault afterwards.",
+        visible: () => this.plugin.settings.authMethod === "oauth",
+        render: (setting) => this.renderOAuthClientSecret(setting),
+      },
+      {
+        name: "Connect to Notion",
+        desc: "Opens the Notion authorization page in your browser.",
+        visible: () => this.plugin.settings.authMethod === "oauth",
+        render: (setting) => this.renderConnectButton(setting),
+      },
+      {
+        name: "Sync interval (minutes)",
+        desc: "0 disables automatic sync; use the Sync now button or command instead.",
+        control: { type: "number", key: "syncIntervalMinutes", min: 0, step: 1, defaultValue: 0 },
+      },
+      {
+        name: "Sync now",
+        desc: `Last sync: ${this.lastSyncDescription()}`,
+        render: (setting) => this.renderSyncNow(setting),
+      },
+    ];
+  }
 
-    new Setting(containerEl)
-      .setName("Notion parent page ID")
-      .setDesc("Synced notes are created as child pages of this Notion page.")
-      .addText((text) =>
-        text
-          .setPlaceholder("e.g. 1a2b3c4d5e6f...")
-          .setValue(this.plugin.settings.parentPageId)
-          .onChange(async (value) => {
-            this.plugin.settings.parentPageId = value.trim();
-            await this.plugin.saveSettings();
-          })
-      );
+  getControlValue(key: string): unknown {
+    return this.plugin.settings[key as keyof NotionSyncSettings];
+  }
 
-    new Setting(containerEl)
-      .setName("Authentication method")
-      .setDesc("Credentials are stored in ~/.config/akbun-notion-sync/credentials.json, never inside the vault.")
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("token", "Integration token")
-          .addOption("oauth", "OAuth")
-          .setValue(this.plugin.settings.authMethod)
-          .onChange(async (value) => {
-            this.plugin.settings.authMethod = value as AuthMethod;
-            await this.plugin.saveSettings();
-            this.display();
-          })
-      );
-
-    if (this.plugin.settings.authMethod === "token") {
-      this.renderTokenAuth(containerEl);
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    const settings = this.plugin.settings as unknown as Record<string, unknown>;
+    if (key === "parentPageId" || key === "oauthClientId") {
+      settings[key] = String(value).trim();
+    } else if (key === "syncIntervalMinutes") {
+      const minutes = Number(value);
+      settings[key] = Number.isFinite(minutes) && minutes > 0 ? Math.floor(minutes) : 0;
     } else {
-      this.renderOAuth(containerEl);
+      settings[key] = value;
     }
+    await this.plugin.saveSettings();
+    if (key === "syncIntervalMinutes") {
+      this.plugin.rescheduleAutoSync();
+    }
+    if (key === "authMethod") {
+      this.refreshDomState();
+    }
+  }
 
-    new Setting(containerEl)
-      .setName("Sync interval (minutes)")
-      .setDesc("0 disables automatic sync; use the Sync now button or command instead.")
-      .addText((text) =>
-        text
-          .setPlaceholder("0")
-          .setValue(String(this.plugin.settings.syncIntervalMinutes))
-          .onChange(async (value) => {
-            const minutes = Number.parseInt(value, 10);
-            this.plugin.settings.syncIntervalMinutes = Number.isFinite(minutes) && minutes > 0 ? minutes : 0;
-            await this.plugin.saveSettings();
-            this.plugin.rescheduleAutoSync();
-          })
-      );
-
-    const lastSync = this.plugin.settings.lastSyncAt
+  private lastSyncDescription(): string {
+    return this.plugin.settings.lastSyncAt
       ? `${new Date(this.plugin.settings.lastSyncAt).toLocaleString()} — ${this.plugin.settings.lastSyncSummary}`
       : "Never synced";
-
-    new Setting(containerEl)
-      .setName("Sync now")
-      .setDesc(`Last sync: ${lastSync}`)
-      .addButton((button) =>
-        button
-          .setButtonText("Sync now")
-          .setCta()
-          .onClick(async () => {
-            button.setDisabled(true);
-            try {
-              await this.plugin.syncNow();
-            } finally {
-              button.setDisabled(false);
-              this.display();
-            }
-          })
-      );
   }
 
-  private renderTokenAuth(containerEl: HTMLElement): void {
-    new Setting(containerEl)
-      .setName("Integration token")
-      .setDesc("Internal integration secret from notion.so/my-integrations.")
-      .addText((text) => {
-        text.inputEl.type = "password";
-        text
-          .setPlaceholder("secret_...")
-          .onChange(async (value) => {
-            const credentials = await loadCredentials();
-            credentials.integrationToken = value.trim();
-            await saveCredentials(credentials);
-          });
-        loadCredentials().then((credentials) => {
-          if (credentials.integrationToken) {
-            text.setValue(credentials.integrationToken);
-          }
-        });
+  private renderIntegrationToken(setting: Setting): void {
+    setting.addText((text) => {
+      text.inputEl.type = "password";
+      text.setPlaceholder("secret_...").onChange(async (value) => {
+        const credentials = await loadCredentials();
+        credentials.integrationToken = value.trim();
+        await saveCredentials(credentials);
       });
+      void loadCredentials().then((credentials) => {
+        if (credentials.integrationToken) {
+          text.setValue(credentials.integrationToken);
+        }
+      });
+    });
   }
 
-  private renderOAuth(containerEl: HTMLElement): void {
-    new Setting(containerEl)
-      .setName("OAuth client ID")
-      .setDesc(`Register ${OAUTH_REDIRECT_URI} as the redirect URI in your Notion public integration.`)
-      .addText((text) =>
-        text
-          .setValue(this.plugin.settings.oauthClientId)
-          .onChange(async (value) => {
-            this.plugin.settings.oauthClientId = value.trim();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    let clientSecret = "";
-    new Setting(containerEl)
-      .setName("OAuth client secret")
-      .setDesc("Only needed when connecting; stored outside the vault afterwards.")
-      .addText((text) => {
-        text.inputEl.type = "password";
-        text.setPlaceholder("secret_...").onChange((value) => {
-          clientSecret = value.trim();
-        });
-        loadCredentials().then((credentials) => {
-          if (credentials.oauthClientSecret) {
-            clientSecret = credentials.oauthClientSecret;
-            text.setValue(credentials.oauthClientSecret);
-          }
-        });
+  private renderOAuthClientSecret(setting: Setting): void {
+    setting.addText((text) => {
+      text.inputEl.type = "password";
+      text.setPlaceholder("secret_...").onChange((value) => {
+        this.pendingClientSecret = value.trim();
       });
+      void loadCredentials().then((credentials) => {
+        if (credentials.oauthClientSecret) {
+          this.pendingClientSecret = credentials.oauthClientSecret;
+          text.setValue(credentials.oauthClientSecret);
+        }
+      });
+    });
+  }
 
-    new Setting(containerEl)
-      .setName("Connect to Notion")
-      .setDesc("Opens the Notion authorization page in your browser.")
-      .addButton((button) =>
-        button
-          .setButtonText("Connect")
-          .setCta()
-          .onClick(async () => {
-            const clientId = this.plugin.settings.oauthClientId;
-            if (!clientId || !clientSecret) {
-              new Notice("Enter the OAuth client ID and client secret first");
-              return;
-            }
-            button.setDisabled(true);
-            try {
-              const credentials = await runOAuthFlow(clientId, clientSecret);
-              new Notice(
-                `Connected to Notion${credentials.oauthWorkspaceName ? ` (${credentials.oauthWorkspaceName})` : ""}`
-              );
-            } catch (error) {
-              new Notice(`Notion OAuth failed: ${(error as Error).message}`);
-            } finally {
-              button.setDisabled(false);
-            }
-          })
-      );
+  private renderConnectButton(setting: Setting): void {
+    setting.addButton((button) =>
+      button
+        .setButtonText("Connect")
+        .setCta()
+        .onClick(async () => {
+          const clientId = this.plugin.settings.oauthClientId;
+          if (!clientId || !this.pendingClientSecret) {
+            new Notice("Enter the OAuth client ID and client secret first");
+            return;
+          }
+          button.setDisabled(true);
+          try {
+            const credentials = await runOAuthFlow(clientId, this.pendingClientSecret);
+            new Notice(
+              `Connected to Notion${credentials.oauthWorkspaceName ? ` (${credentials.oauthWorkspaceName})` : ""}`
+            );
+          } catch (error) {
+            new Notice(`Notion OAuth failed: ${(error as Error).message}`);
+          } finally {
+            button.setDisabled(false);
+          }
+        })
+    );
+  }
+
+  private renderSyncNow(setting: Setting): void {
+    setting.addButton((button) =>
+      button
+        .setButtonText("Sync now")
+        .setCta()
+        .onClick(async () => {
+          button.setDisabled(true);
+          try {
+            await this.plugin.syncNow();
+          } finally {
+            button.setDisabled(false);
+            this.update();
+          }
+        })
+    );
   }
 }

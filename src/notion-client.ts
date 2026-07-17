@@ -16,7 +16,7 @@ export class RateLimiter {
     this.nextAvailable = scheduled + this.intervalMs;
     const delay = scheduled - now;
     if (delay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise((resolve) => window.setTimeout(resolve, delay));
     }
   }
 }
@@ -149,6 +149,22 @@ export interface OAuthTokenResponse {
   workspace_name?: string;
 }
 
+interface NotionErrorBody {
+  message?: string;
+  error?: string;
+  error_description?: string;
+}
+
+interface NotionPageResponse {
+  id: string;
+}
+
+interface NotionBlockChildrenResponse {
+  results?: { id: string }[];
+  has_more?: boolean;
+  next_cursor?: string | null;
+}
+
 export class NotionClient {
   private limiter: RateLimiter;
 
@@ -156,7 +172,7 @@ export class NotionClient {
     this.limiter = limiter ?? new RateLimiter(334);
   }
 
-  private async request(method: string, path: string, body?: unknown): Promise<any> {
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     await this.limiter.wait();
     const response = await requestUrl({
       url: `${NOTION_API}${path}`,
@@ -170,15 +186,16 @@ export class NotionClient {
       throw: false,
     });
     if (response.status >= 400) {
-      const message = response.json?.message ?? response.text;
+      const errorBody = response.json as NotionErrorBody | null;
+      const message = errorBody?.message ?? response.text;
       throw new Error(`Notion API ${response.status}: ${message}`);
     }
-    return response.json;
+    return response.json as T;
   }
 
   async createPage(parentPageId: string, title: string, blocks: NotionBlock[]): Promise<string> {
     const chunks = chunkBlocks(blocks);
-    const page = await this.request("POST", "/pages", {
+    const page = await this.request<NotionPageResponse>("POST", "/pages", {
       parent: { page_id: parentPageId },
       properties: {
         title: { title: [{ type: "text", text: { content: title } }] },
@@ -214,11 +231,14 @@ export class NotionClient {
       const query = cursor
         ? `?start_cursor=${encodeURIComponent(cursor)}&page_size=100`
         : "?page_size=100";
-      const result = await this.request("GET", `/blocks/${pageId}/children${query}`);
+      const result = await this.request<NotionBlockChildrenResponse>(
+        "GET",
+        `/blocks/${pageId}/children${query}`
+      );
       for (const block of result.results ?? []) {
         ids.push(block.id);
       }
-      cursor = result.has_more ? result.next_cursor : undefined;
+      cursor = result.has_more ? result.next_cursor ?? undefined : undefined;
     } while (cursor);
     for (const id of ids) {
       await this.request("DELETE", `/blocks/${id}`);
@@ -248,10 +268,11 @@ export async function exchangeOAuthCode(
     throw: false,
   });
   if (response.status >= 400) {
-    const message = response.json?.error_description ?? response.json?.error ?? response.text;
+    const errorBody = response.json as NotionErrorBody | null;
+    const message = errorBody?.error_description ?? errorBody?.error ?? response.text;
     throw new Error(`OAuth token exchange failed (${response.status}): ${message}`);
   }
-  return response.json;
+  return response.json as OAuthTokenResponse;
 }
 
 export function buildAuthorizationUrl(clientId: string, redirectUri: string, state: string): string {
