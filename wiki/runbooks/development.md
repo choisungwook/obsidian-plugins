@@ -3,7 +3,7 @@ type: Runbook
 title: Development
 description: Build, test, and local-install procedure for the akbun-notion-sync plugin.
 tags: [build, test, ci]
-timestamp: 2026-07-17T09:02:49Z
+timestamp: 2026-07-18T07:49:19Z
 ---
 
 # Prerequisites
@@ -28,8 +28,9 @@ npm run dev     # esbuild watch 모드
 # CI
 
 - `.github/workflows/ci.yml` (Test): PR마다 `npm ci` → `npm test` → `npm run build` 실행
+- `.github/workflows/release.yml` (Release): main 머지마다 빌드·attest 후 `gh release create`로 manifest version tag의 GitHub Release를 만들고 `main.js`, `manifest.json` 첨부
 
-자동 Release workflow는 없다. 릴리스는 [marketplace-submission](marketplace-submission.md)의 수동 절차를 따른다.
+릴리스 절차 상세와 attestation 이력은 [marketplace-submission](marketplace-submission.md) 참고.
 
 # Notes for agents
 
