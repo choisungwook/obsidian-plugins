@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Resolve release tag from manifest
+        id: version
+        # Obsidian marketplace requires the release tag to exactly match
+        # manifest.json's version, with no prefix
+        run: echo "tag=$(node -p 'require("./manifest.json").version')" >> "$GITHUB_OUTPUT"
+      - name: Forbid overwriting released versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        # Obsidian verifies each asset's attestation against the release tag's
+        # commit, so a released version is never rebuilt or re-attested. This
+        # guard must run BEFORE the attest step: a merge without a version bump
+        # rebuilds byte-identical main.js, and attesting it again would stack a
+        # second commit's attestation onto the released digest (the 0.1.2
+        # failure mode).
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::Release $TAG already exists. Overwriting a released version is not allowed — bump manifest.json's version (and versions.json) in the PR."
+            exit 1
+          fi
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+      - name: Wait until attestations are verifiable via the public API
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The marketplace scans release assets as soon as the release is
+        # published — gate the release on the attestation being fetchable and
+        # valid through the same public API the scanner uses.
+        run: |
+          for attempt in $(seq 1 10); do
+            if gh attestation verify main.js --repo "$GITHUB_REPOSITORY" &&
+               gh attestation verify manifest.json --repo "$GITHUB_REPOSITORY"; then
+              exit 0
+            fi
+            echo "Attestations not verifiable yet (attempt $attempt/10); retrying in 15s"
+            sleep 15
+          done
+          echo "::error::Attestations are still not verifiable via the GitHub API; aborting release."
+          exit 1
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        # Obsidian downloads only main.js and manifest.json from the release;
+        # extra assets like versions.json trigger review warnings. --target pins
+        # the tag to the exact commit this run built and attested, so a newer
+        # push to main between build and release cannot break the
+        # attestation-to-tag-commit match the marketplace checks.
+        run: |
+          gh release create "$TAG" main.js manifest.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes
