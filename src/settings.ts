@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { createServer, Server } from "http";
 import { join } from "path";
-import { App, Notice, PluginSettingTab, Setting, SettingDefinitionItem } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type NotionSyncPlugin from "./main";
 import { buildAuthorizationUrl, exchangeOAuthCode } from "./notion-client";
 import { CONFIG_DIR, readJsonFile, writeJsonFile } from "./sync";
@@ -115,80 +115,87 @@ export class NotionSyncSettingTab extends PluginSettingTab {
     super(app, plugin);
   }
 
-  getSettingDefinitions(): SettingDefinitionItem[] {
-    return [
-      {
-        name: "Notion parent page ID",
-        desc: "Synced notes are created as child pages of this Notion page.",
-        control: { type: "text", key: "parentPageId", placeholder: "e.g. 1a2b3c4d5e6f..." },
-      },
-      {
-        name: "Authentication method",
-        desc: "Credentials are stored in ~/.config/akbun-notion-sync/credentials.json, never inside the vault.",
-        control: {
-          type: "dropdown",
-          key: "authMethod",
-          options: { token: "Integration token", oauth: "OAuth" },
-        },
-      },
-      {
-        name: "Integration token",
-        desc: "Internal integration secret from notion.so/my-integrations.",
-        visible: () => this.plugin.settings.authMethod === "token",
-        render: (setting) => this.renderIntegrationToken(setting),
-      },
-      {
-        name: "OAuth client ID",
-        desc: `Register ${OAUTH_REDIRECT_URI} as the redirect URI in your Notion public integration.`,
-        visible: () => this.plugin.settings.authMethod === "oauth",
-        control: { type: "text", key: "oauthClientId" },
-      },
-      {
-        name: "OAuth client secret",
-        desc: "Only needed when connecting; stored outside the vault afterwards.",
-        visible: () => this.plugin.settings.authMethod === "oauth",
-        render: (setting) => this.renderOAuthClientSecret(setting),
-      },
-      {
-        name: "Connect to Notion",
-        desc: "Opens the Notion authorization page in your browser.",
-        visible: () => this.plugin.settings.authMethod === "oauth",
-        render: (setting) => this.renderConnectButton(setting),
-      },
-      {
-        name: "Sync interval (minutes)",
-        desc: "0 disables automatic sync; use the Sync now button or command instead.",
-        control: { type: "number", key: "syncIntervalMinutes", min: 0, step: 1, defaultValue: 0 },
-      },
-      {
-        name: "Sync now",
-        desc: `Last sync: ${this.lastSyncDescription()}`,
-        render: (setting) => this.renderSyncNow(setting),
-      },
-    ];
-  }
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
 
-  getControlValue(key: string): unknown {
-    return this.plugin.settings[key as keyof NotionSyncSettings];
-  }
+    new Setting(containerEl)
+      .setName("Notion parent page ID")
+      .setDesc("Synced notes are created as child pages of this Notion page.")
+      .addText((text) =>
+        text
+          .setPlaceholder("e.g. 1a2b3c4d5e6f...")
+          .setValue(this.plugin.settings.parentPageId)
+          .onChange(async (value) => {
+            this.plugin.settings.parentPageId = value.trim();
+            await this.plugin.saveSettings();
+          })
+      );
 
-  async setControlValue(key: string, value: unknown): Promise<void> {
-    const settings = this.plugin.settings as unknown as Record<string, unknown>;
-    if (key === "parentPageId" || key === "oauthClientId") {
-      settings[key] = String(value).trim();
-    } else if (key === "syncIntervalMinutes") {
-      const minutes = Number(value);
-      settings[key] = Number.isFinite(minutes) && minutes > 0 ? Math.floor(minutes) : 0;
+    new Setting(containerEl)
+      .setName("Authentication method")
+      .setDesc("Credentials are stored in ~/.config/akbun-notion-sync/credentials.json, never inside the vault.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("token", "Integration token")
+          .addOption("oauth", "OAuth")
+          .setValue(this.plugin.settings.authMethod)
+          .onChange(async (value) => {
+            this.plugin.settings.authMethod = value as AuthMethod;
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
+    if (this.plugin.settings.authMethod === "token") {
+      this.renderIntegrationToken(
+        new Setting(containerEl)
+          .setName("Integration token")
+          .setDesc("Internal integration secret from notion.so/my-integrations.")
+      );
     } else {
-      settings[key] = value;
+      new Setting(containerEl)
+        .setName("OAuth client ID")
+        .setDesc(`Register ${OAUTH_REDIRECT_URI} as the redirect URI in your Notion public integration.`)
+        .addText((text) =>
+          text.setValue(this.plugin.settings.oauthClientId).onChange(async (value) => {
+            this.plugin.settings.oauthClientId = value.trim();
+            await this.plugin.saveSettings();
+          })
+        );
+      this.renderOAuthClientSecret(
+        new Setting(containerEl)
+          .setName("OAuth client secret")
+          .setDesc("Only needed when connecting; stored outside the vault afterwards.")
+      );
+      this.renderConnectButton(
+        new Setting(containerEl)
+          .setName("Connect to Notion")
+          .setDesc("Opens the Notion authorization page in your browser.")
+      );
     }
-    await this.plugin.saveSettings();
-    if (key === "syncIntervalMinutes") {
-      this.plugin.rescheduleAutoSync();
-    }
-    if (key === "authMethod") {
-      this.refreshDomState();
-    }
+
+    new Setting(containerEl)
+      .setName("Sync interval (minutes)")
+      .setDesc("0 disables automatic sync; use the Sync now button or command instead.")
+      .addText((text) => {
+        text.inputEl.type = "number";
+        text.inputEl.min = "0";
+        text.inputEl.step = "1";
+        text.setValue(String(this.plugin.settings.syncIntervalMinutes)).onChange(async (value) => {
+          const minutes = Number(value);
+          this.plugin.settings.syncIntervalMinutes =
+            Number.isFinite(minutes) && minutes > 0 ? Math.floor(minutes) : 0;
+          await this.plugin.saveSettings();
+          this.plugin.rescheduleAutoSync();
+        });
+      });
+
+    this.renderSyncNow(
+      new Setting(containerEl)
+        .setName("Sync now")
+        .setDesc(`Last sync: ${this.lastSyncDescription()}`)
+    );
   }
 
   private lastSyncDescription(): string {
@@ -265,7 +272,7 @@ export class NotionSyncSettingTab extends PluginSettingTab {
             await this.plugin.syncNow();
           } finally {
             button.setDisabled(false);
-            this.update();
+            this.display();
           }
         })
     );

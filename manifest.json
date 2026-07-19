@@ -1,7 +1,7 @@
 {
   "id": "akbun-notion-sync",
   "name": "Akbun Notion Sync",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "minAppVersion": "1.5.7",
   "description": "Sync your vault's markdown notes to Notion pages.",
   "author": "choisungwook",
