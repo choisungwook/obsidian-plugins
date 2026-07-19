@@ -4,7 +4,7 @@ title: Akbun Notion Sync
 description: Desktop-only Obsidian plugin that syncs vault markdown notes to Notion child pages using sha256 diffing.
 resource: https://github.com/choisungwook/obsidian-plugins
 tags: [obsidian, notion, sync, desktop-only]
-timestamp: 2026-07-17T00:00:00Z
+timestamp: 2026-07-19T00:00:00Z
 ---
 
 # Overview
@@ -25,6 +25,7 @@ Vault 전체를 순회해 각 마크다운 노트의 sha256 해시를 이전 동
 - [modules/](modules/index.md) — 소스 모듈별 문서
 - [storage/](storage/index.md) — 디스크에 저장되는 파일들의 스키마와 위치
 - [runbooks/](runbooks/index.md) — 개발/빌드/테스트 절차
+- [adr/](adr/index.md) — 주요 결정 기록 (Architecture Decision Records)
 
 # Invariants
 
