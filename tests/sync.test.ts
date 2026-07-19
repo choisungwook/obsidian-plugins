@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { computeHash, planSync, syncCutoff, SyncState } from "../src/sync";
+import {
+  computeHash,
+  isPathInScope,
+  parseSyncFolders,
+  planSync,
+  syncCutoff,
+  SyncState,
+} from "../src/sync";
 
 describe("computeHash", () => {
   it("returns the sha256 hex digest", () => {
@@ -57,6 +64,53 @@ describe("planSync", () => {
     const vaultPaths = new Set(["unchanged.md", "changed.md"]);
     const plan = planSync(current, state, vaultPaths);
     expect(plan.archives).toEqual(["deleted.md"]);
+  });
+
+  it("does not archive state entries outside the sync folders", () => {
+    const scoped: SyncState = {
+      pages: {
+        "notes/kept.md": { hash: computeHash("a"), pageId: "p1" },
+        "outside/old.md": { hash: computeHash("b"), pageId: "p2" },
+      },
+    };
+    const plan = planSync({}, scoped, new Set(), ["notes"]);
+    expect(plan.archives).toEqual(["notes/kept.md"]);
+  });
+});
+
+describe("parseSyncFolders", () => {
+  it("splits on commas, trims whitespace and slashes, drops empties", () => {
+    expect(parseSyncFolders(" notes , /work/projects/ , , ")).toEqual(["notes", "work/projects"]);
+  });
+
+  it("deduplicates entries", () => {
+    expect(parseSyncFolders("notes, notes/")).toEqual(["notes"]);
+  });
+
+  it("returns an empty list for blank input", () => {
+    expect(parseSyncFolders("")).toEqual([]);
+    expect(parseSyncFolders("  ")).toEqual([]);
+  });
+});
+
+describe("isPathInScope", () => {
+  it("includes everything when no folders are configured", () => {
+    expect(isPathInScope("anywhere/note.md", [])).toBe(true);
+  });
+
+  it("matches files under a configured folder", () => {
+    expect(isPathInScope("notes/a.md", ["notes"])).toBe(true);
+    expect(isPathInScope("notes/deep/b.md", ["notes"])).toBe(true);
+    expect(isPathInScope("work/projects/c.md", ["notes", "work/projects"])).toBe(true);
+  });
+
+  it("does not match sibling folders sharing a prefix", () => {
+    expect(isPathInScope("notes-archive/a.md", ["notes"])).toBe(false);
+    expect(isPathInScope("work/projects-old/c.md", ["work/projects"])).toBe(false);
+  });
+
+  it("excludes files outside every configured folder", () => {
+    expect(isPathInScope("misc/a.md", ["notes"])).toBe(false);
   });
 });
 

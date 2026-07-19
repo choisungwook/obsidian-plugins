@@ -40,10 +40,24 @@ export function syncCutoff(now: number, modifiedWithinDays: number): number {
   return modifiedWithinDays > 0 ? now - modifiedWithinDays * MS_PER_DAY : 0;
 }
 
+export function parseSyncFolders(input: string): string[] {
+  const folders = input
+    .split(",")
+    .map((entry) => entry.trim().replace(/^\/+|\/+$/g, ""))
+    .filter((entry) => entry.length > 0);
+  return [...new Set(folders)];
+}
+
+export function isPathInScope(path: string, folders: string[]): boolean {
+  if (folders.length === 0) return true;
+  return folders.some((folder) => path === folder || path.startsWith(`${folder}/`));
+}
+
 export function planSync(
   current: Record<string, string>,
   state: SyncState,
-  vaultPaths: Set<string> = new Set(Object.keys(current))
+  vaultPaths: Set<string> = new Set(Object.keys(current)),
+  folders: string[] = []
 ): SyncPlan {
   const plan: SyncPlan = { creates: [], updates: [], archives: [] };
   for (const [path, hash] of Object.entries(current)) {
@@ -55,7 +69,7 @@ export function planSync(
     }
   }
   for (const path of Object.keys(state.pages)) {
-    if (!vaultPaths.has(path)) {
+    if (!vaultPaths.has(path) && isPathInScope(path, folders)) {
       plan.archives.push(path);
     }
   }
@@ -100,7 +114,8 @@ export class SyncEngine {
     private vault: Vault,
     private client: NotionClient,
     private parentPageId: string,
-    private modifiedWithinDays: number
+    private modifiedWithinDays: number,
+    private syncFolders: string[]
   ) {}
 
   get isRunning(): boolean {
@@ -128,6 +143,7 @@ export class SyncEngine {
     const cutoff = syncCutoff(Date.now(), this.modifiedWithinDays);
 
     for (const file of files) {
+      if (!isPathInScope(file.path, this.syncFolders)) continue;
       vaultPaths.add(file.path);
       if (file.stat.mtime < cutoff) continue;
       const content = await this.vault.cachedRead(file);
@@ -135,7 +151,7 @@ export class SyncEngine {
       current[file.path] = computeHash(content);
     }
 
-    const plan = planSync(current, state, vaultPaths);
+    const plan = planSync(current, state, vaultPaths, this.syncFolders);
     const total = plan.creates.length + plan.updates.length + plan.archives.length;
     const result: SyncResult = { created: 0, updated: 0, archived: 0, failed: 0 };
 
