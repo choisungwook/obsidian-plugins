@@ -72,7 +72,12 @@ export default class NotionSyncPlugin extends Plugin {
       return;
     }
 
-    this.engine = new SyncEngine(this.app.vault, new NotionClient(token), this.settings.parentPageId);
+    this.engine = new SyncEngine(
+      this.app.vault,
+      new NotionClient(token),
+      this.settings.parentPageId,
+      this.settings.syncModifiedWithinDays
+    );
     try {
       const result = await this.engine.run();
       this.settings.lastSyncSummary =

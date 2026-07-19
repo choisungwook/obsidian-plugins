@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeHash, planSync, SyncState } from "../src/sync";
+import { computeHash, planSync, syncCutoff, SyncState } from "../src/sync";
 
 describe("computeHash", () => {
   it("returns the sha256 hex digest", () => {
@@ -42,5 +42,33 @@ describe("planSync", () => {
     };
     const plan = planSync(current, state);
     expect(plan).toEqual({ creates: [], updates: [], archives: [] });
+  });
+
+  it("does not archive files excluded from current but still in the vault", () => {
+    const current = { "changed.md": computeHash("new") };
+    const vaultPaths = new Set(["changed.md", "unchanged.md", "deleted.md"]);
+    const plan = planSync(current, state, vaultPaths);
+    expect(plan.updates).toEqual(["changed.md"]);
+    expect(plan.archives).toEqual([]);
+  });
+
+  it("archives files missing from the vault even when current is filtered", () => {
+    const current = {};
+    const vaultPaths = new Set(["unchanged.md", "changed.md"]);
+    const plan = planSync(current, state, vaultPaths);
+    expect(plan.archives).toEqual(["deleted.md"]);
+  });
+});
+
+describe("syncCutoff", () => {
+  const now = 1_700_000_000_000;
+
+  it("subtracts whole days from now", () => {
+    expect(syncCutoff(now, 1)).toBe(now - 24 * 60 * 60 * 1000);
+    expect(syncCutoff(now, 7)).toBe(now - 7 * 24 * 60 * 60 * 1000);
+  });
+
+  it("returns 0 when the window is disabled", () => {
+    expect(syncCutoff(now, 0)).toBe(0);
   });
 });

@@ -30,11 +30,21 @@ export interface SyncResult {
   failed: number;
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 export function computeHash(content: string): string {
   return createHash("sha256").update(content, "utf8").digest("hex");
 }
 
-export function planSync(current: Record<string, string>, state: SyncState): SyncPlan {
+export function syncCutoff(now: number, modifiedWithinDays: number): number {
+  return modifiedWithinDays > 0 ? now - modifiedWithinDays * MS_PER_DAY : 0;
+}
+
+export function planSync(
+  current: Record<string, string>,
+  state: SyncState,
+  vaultPaths: Set<string> = new Set(Object.keys(current))
+): SyncPlan {
   const plan: SyncPlan = { creates: [], updates: [], archives: [] };
   for (const [path, hash] of Object.entries(current)) {
     const known = state.pages[path];
@@ -45,7 +55,7 @@ export function planSync(current: Record<string, string>, state: SyncState): Syn
     }
   }
   for (const path of Object.keys(state.pages)) {
-    if (!(path in current)) {
+    if (!vaultPaths.has(path)) {
       plan.archives.push(path);
     }
   }
@@ -86,7 +96,12 @@ function pageTitle(path: string): string {
 export class SyncEngine {
   private running = false;
 
-  constructor(private vault: Vault, private client: NotionClient, private parentPageId: string) {}
+  constructor(
+    private vault: Vault,
+    private client: NotionClient,
+    private parentPageId: string,
+    private modifiedWithinDays: number
+  ) {}
 
   get isRunning(): boolean {
     return this.running;
@@ -109,14 +124,18 @@ export class SyncEngine {
     const files = this.vault.getMarkdownFiles();
     const contents = new Map<string, string>();
     const current: Record<string, string> = {};
+    const vaultPaths = new Set<string>();
+    const cutoff = syncCutoff(Date.now(), this.modifiedWithinDays);
 
     for (const file of files) {
+      vaultPaths.add(file.path);
+      if (file.stat.mtime < cutoff) continue;
       const content = await this.vault.cachedRead(file);
       contents.set(file.path, content);
       current[file.path] = computeHash(content);
     }
 
-    const plan = planSync(current, state);
+    const plan = planSync(current, state, vaultPaths);
     const total = plan.creates.length + plan.updates.length + plan.archives.length;
     const result: SyncResult = { created: 0, updated: 0, archived: 0, failed: 0 };
 
