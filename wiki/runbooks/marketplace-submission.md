@@ -4,7 +4,7 @@ title: Obsidian Community Plugin Marketplace Submission
 description: Procedure for publishing akbun-notion-sync to the Obsidian community plugin marketplace.
 resource: https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin
 tags: [obsidian, marketplace, release, submission]
-timestamp: 2026-07-18T07:49:19Z
+timestamp: 2026-07-18T09:30:00Z
 ---
 
 # Obsidian 커뮤니티 마켓 제출
@@ -18,6 +18,7 @@ timestamp: 2026-07-18T07:49:19Z
 - 한 번 릴리스된 버전은 덮어쓰지 않는다. 변경은 항상 새 버전으로 릴리스한다.
 - ID와 이름은 기존 커뮤니티 플러그인과 중복되면 안 된다.
 - `esbuild.config.mjs`의 버전 배너는 릴리스별 `main.js`를 식별하므로 제거하지 않는다.
+- `minAppVersion`은 실제 릴리스된 Obsidian 데스크톱 버전 이하여야 한다. 실제 버전보다 높으면 마켓 등록은 통과해도 설치 시 "No appropriate version found" 오류가 난다 — 0.1.7까지 `minAppVersion: 1.13.0`(당시 최신은 1.12.7)으로 이 오류가 발생해 0.1.8에서 1.5.7(플러그인이 쓰는 obsidian API 타입 버전)로 내렸다. 최신 앱 버전은 [obsidianmd/obsidian-releases](https://github.com/obsidianmd/obsidian-releases/releases/latest)에서 확인한다.
 
 ## Attestation 장애 기록
 
