@@ -17,6 +17,7 @@ export interface NotionSyncSettings {
   authMethod: AuthMethod;
   oauthClientId: string;
   syncIntervalMinutes: number;
+  syncModifiedWithinDays: number;
   lastSyncAt: number | null;
   lastSyncSummary: string;
 }
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: NotionSyncSettings = {
   authMethod: "token",
   oauthClientId: "",
   syncIntervalMinutes: 0,
+  syncModifiedWithinDays: 1,
   lastSyncAt: null,
   lastSyncSummary: "",
 };
@@ -188,6 +190,21 @@ export class NotionSyncSettingTab extends PluginSettingTab {
             Number.isFinite(minutes) && minutes > 0 ? Math.floor(minutes) : 0;
           await this.plugin.saveSettings();
           this.plugin.rescheduleAutoSync();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName("Sync files modified within (days)")
+      .setDesc("Only files modified within this many days are synced. 0 syncs every file. Files outside the window are left untouched, not archived.")
+      .addText((text) => {
+        text.inputEl.type = "number";
+        text.inputEl.min = "0";
+        text.inputEl.step = "1";
+        text.setValue(String(this.plugin.settings.syncModifiedWithinDays)).onChange(async (value) => {
+          const days = Number(value);
+          this.plugin.settings.syncModifiedWithinDays =
+            Number.isFinite(days) && days > 0 ? Math.floor(days) : 0;
+          await this.plugin.saveSettings();
         });
       });
 
