@@ -42,6 +42,7 @@ If this feels heavy, the **Integration token** method is simpler for a single pe
 ## Settings
 
 - **Notion parent page ID** — the page under which synced notes are created.
+- **Folders to sync** — comma-separated vault folder paths (e.g. `notes, work/projects`). Empty syncs the whole vault. Notes outside these folders are never created, updated, or archived — narrowing the scope leaves already-synced Notion pages untouched.
 - **Sync interval (minutes)** — `0` means manual only; otherwise the vault syncs automatically at that interval.
 - **Sync now** — trigger a sync immediately; the last sync time and result are shown next to the button.
 

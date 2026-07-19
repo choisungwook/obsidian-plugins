@@ -16,6 +16,7 @@ export interface NotionSyncSettings {
   parentPageId: string;
   authMethod: AuthMethod;
   oauthClientId: string;
+  syncFolders: string;
   syncIntervalMinutes: number;
   syncModifiedWithinDays: number;
   lastSyncAt: number | null;
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: NotionSyncSettings = {
   parentPageId: "",
   authMethod: "token",
   oauthClientId: "",
+  syncFolders: "",
   syncIntervalMinutes: 0,
   syncModifiedWithinDays: 1,
   lastSyncAt: null,
@@ -130,6 +132,21 @@ export class NotionSyncSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.parentPageId)
           .onChange(async (value) => {
             this.plugin.settings.parentPageId = value.trim();
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Folders to sync")
+      .setDesc(
+        "Comma-separated vault folder paths (e.g. notes, work/projects). Empty syncs the whole vault. Notes outside these folders are never created, updated, or archived."
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("e.g. notes, work/projects")
+          .setValue(this.plugin.settings.syncFolders)
+          .onChange(async (value) => {
+            this.plugin.settings.syncFolders = value;
             await this.plugin.saveSettings();
           })
       );

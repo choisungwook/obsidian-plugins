@@ -6,7 +6,7 @@ import {
   NotionSyncSettingTab,
   resolveToken,
 } from "./settings";
-import { SyncEngine } from "./sync";
+import { parseSyncFolders, SyncEngine } from "./sync";
 
 export default class NotionSyncPlugin extends Plugin {
   settings: NotionSyncSettings = DEFAULT_SETTINGS;
@@ -76,7 +76,8 @@ export default class NotionSyncPlugin extends Plugin {
       this.app.vault,
       new NotionClient(token),
       this.settings.parentPageId,
-      this.settings.syncModifiedWithinDays
+      this.settings.syncModifiedWithinDays,
+      parseSyncFolders(this.settings.syncFolders)
     );
     try {
       const result = await this.engine.run();
